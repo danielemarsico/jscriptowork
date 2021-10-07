@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script>
+
+function read_all_text_file(path){
+    var ForReading = 1, ForWriting = 2;
+    var fso = new ActiveXObject("Scripting.FileSystemObject");
+    var f = fso.OpenTextFile(path, ForReading);
+    if (f.AtEndOfStream)
+        return ("");
+    else
+        return (f.ReadAll());
+}
+function view(){
+
+var workspace =  read_all_text_file("./.workspace");
+
+
+
+
+}
+
+
+
+function read_file_as_text(filepath){
+
+
+
+
+}
+
+//load_properties("tips-test-check.properties");
+
+//alert(GLOBAL_SHEET_NAME);
+
+
+window.onload=view;
+
+</script>
+
+</head>
+<body >
+<input id="workspace" style="width:120px" type="file" size="10"  value=".workspace" />
+</body>
+</html>
