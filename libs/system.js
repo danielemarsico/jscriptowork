@@ -1,3 +1,62 @@
+load_working_directory = function (){
+	
+	var path = CURRENT_FOLDER+"/.workspace";
+    var workspace = read_all_text_file(path);
+	if(!workspace){
+		
+		return CURRENT_FOLDER+INPUT_FOLDER+"\\";
+	
+	}else{
+		
+		return workspace.trim();
+	}
+	
+}
+
+save_working_directory = function(working_directory){
+	
+	var path = CURRENT_FOLDER+"/.workspace";
+	
+    var fso = new ActiveXObject("Scripting.FileSystemObject");
+    try{
+		
+		var f = fso.CreateTextFile(path, true);
+		f.WriteLine(working_directory);
+		f.Close();
+	}
+	catch(exc){
+		log(exc.message);
+		return null;
+		
+	}
+	
+	
+	
+}
+
+load_properties = function (properties_file){
+    
+    
+    var path = CURRENT_FOLDER+"/"+properties_file;
+    var lib = read_all_text_file(path);
+    var rows = lib.split("\n");
+    log("reading configuration...");
+    for(var i= 0;i < rows.length; i++){
+        var items = rows[i].trim().split("="); 
+        var new_row = "";
+        if(items.length==2){
+            new_row = ""+items[0]+"=\""+items[1]+ "\";";
+        }
+        rows[i] = new_row;
+    }
+    lib=rows.join('\n');
+    log("configuration loaded.");
+    eval(lib);
+    
+}
+
+
+
 
 
 write_text_to_file = function (text,filepath){
@@ -121,4 +180,17 @@ parse_date = function(ds,format){
 	
 	
 	
+}
+
+
+http_request = function(url,method,reqListener){
+	if(['GET','POST','PUT','DELETE'].indexOf(method) == -1){
+		
+		throw 'method not recognized:'+method;
+		
+	}
+	var request = new ActiveXObject("MSXML2.XMLHTTP.6.0");
+	request.open(method, url,false);
+	request.send();
+	reqListener(request.responseText)
 }

@@ -7,12 +7,6 @@
     ./tools/in/
     ./tools/libs/
     ./tools/out/
-    ./tools/templates/
-
-
-
-
-
 
 */
 
@@ -38,7 +32,7 @@ function log( message){
 
 
 //global variables
-var APP_FOLDER                 = "tools";
+var APP_FOLDER                 = "tests";
 var CURRENT_PATH               = _script.ScriptFullName;
 var CURRENT_FOLDER             = CURRENT_PATH.slice(0, CURRENT_PATH.indexOf(_script.ScriptName));
 var ROOT_FOLDER                = CURRENT_FOLDER.slice(0, CURRENT_PATH.indexOf(APP_FOLDER));
@@ -49,17 +43,38 @@ var INPUT_FOLDER               = "in";
 load("core");
 load("system");
 load("helpers");
-load_properties("test.properties");
+//load_properties("httpconnect.properties");
 
 
-do_in_word(function(db){
+(function(){
 	
-	log('hello');
-	var tmp = read_line().trim();
+	log("app folder\t"+APP_FOLDER);
+	log("current folder\t"+CURRENT_FOLDER)
+	log("current path\t"+CURRENT_PATH)
+	log("root folder\t"+ROOT_FOLDER)
 	
-})
-
-
+	function callback(resp){
+		
+		log(resp)
+		
+	}
+	
+	try{
+	
+		http_request('https://www.w3schools.com/','TEST',callback);
+	
+	}catch(e){
+		
+		log('error:\t'+e);
+		
+	}
+	
+	
+	http_request('https://www.w3schools.com/','GET',callback);
+	
+	
+	
+})()
 
 
 
@@ -109,7 +124,7 @@ function read_all_text_file(path){
 
 function load(modulename){
     
-    var path = CURRENT_FOLDER+"/libs/"+modulename+".js";
+    var path = ROOT_FOLDER+"/libs/"+modulename+".js";
     var lib = read_all_text_file(path);
     eval(lib);
     
