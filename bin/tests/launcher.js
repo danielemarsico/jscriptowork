@@ -4,7 +4,7 @@ function log( message){
     _script.echo(message);
     
 }
-var APP_FOLDER                 = "tests";
+var APP_FOLDER                 = "bin";
 var CURRENT_PATH               = _script.ScriptFullName;
 var CURRENT_FOLDER             = CURRENT_PATH.slice(0, CURRENT_PATH.indexOf(_script.ScriptName));
 var ROOT_FOLDER                = CURRENT_FOLDER.slice(0, CURRENT_PATH.indexOf(APP_FOLDER));
@@ -26,9 +26,9 @@ function read_all_text_file(path){
 		f.Close();
 	}
 	catch(exc){
-		log("workspace file doesn't exist");
+		log("cannot load file: " + path);
 		return null;
-		
+
 	}
 }
 

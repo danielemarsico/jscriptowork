@@ -1,0 +1,164 @@
+// build.js - Creates the jscriptowork deployment package in dist/
+//
+// Run from the project root:
+//   cscript.exe build.js
+//
+// Output (two files only):
+//   dist/launcher.js   -- all libs inlined; open_hta() injects libs inline into HTAs
+//   dist/launcher.bat  -- cscript.exe wrapper: launcher.bat <yourscript.js>
+
+(function() {
+
+    var fso  = new ActiveXObject("Scripting.FileSystemObject");
+    var root = WScript.ScriptFullName;
+    root = root.slice(0, root.lastIndexOf("\\"));  // project root (no trailing backslash)
+
+    var distDir = root + "\\dist";
+    var libsSrc = root + "\\libs";
+
+    function echo(m) { WScript.Echo(m); }
+
+    function readFile(path) {
+        try {
+            var f = fso.OpenTextFile(path, 1);
+            if (f.AtEndOfStream) { f.Close(); return ""; }
+            var s = f.ReadAll();
+            f.Close();
+            return s;
+        } catch(e) {
+            echo("ERROR reading " + path + " : " + e.message);
+            return "";
+        }
+    }
+
+    function writeFile(path, text) {
+        var f = fso.CreateTextFile(path, true);
+        f.Write(text);
+        f.Close();
+    }
+
+    // Escapes a string for safe embedding as a JS single-quoted string literal.
+    // Backslashes must be escaped first to avoid double-escaping.
+    function escapeJsStr(s) {
+        return s
+            .replace(/\\/g,  '\\\\')
+            .replace(/'/g,   "\\'")
+            .replace(/\r/g,  '')
+            .replace(/\n/g,  '\\n');
+    }
+
+    // ---- clean and create dist ----
+    if (fso.FolderExists(distDir)) {
+        fso.DeleteFolder(distDir, true);
+        echo("Removed previous dist/");
+    }
+    fso.CreateFolder(distDir);
+    echo("Created dist/");
+
+    // ---- libs to bundle into launcher.js (CScript side) ----
+    var libNames = ["core", "polyfills", "system", "helpers", "minimist", "ui", "minitest"];
+
+    // ---- libs to embed inside HTAs (what ui.js previously loaded via <script src>) ----
+    // Must match the three files referenced in ui.js block 2.
+    var htaLibNames = ["core", "polyfills", "system"];
+    var htaLibsSrc = "";
+    for (var h = 0; h < htaLibNames.length; h++) {
+        var hp = libsSrc + "\\" + htaLibNames[h] + ".js";
+        if (fso.FileExists(hp)) { htaLibsSrc += readFile(hp) + "\r\n"; }
+    }
+
+    // ---- assemble dist/launcher.js ----
+    var L = [];
+
+    L.push("// jscriptowork bundled launcher");
+    var _d = new Date();
+    var _ts = _d.getFullYear() + "-" +
+              ("0" + (_d.getMonth() + 1)).slice(-2) + "-" +
+              ("0" + _d.getDate()).slice(-2) + " " +
+              ("0" + _d.getHours()).slice(-2) + ":" +
+              ("0" + _d.getMinutes()).slice(-2);
+    L.push("// Generated: " + _ts);
+    L.push("//");
+    L.push("// All libs are inlined. No separate libs/ folder is needed.");
+    L.push("// open_hta() injects lib source inline into generated HTAs.");
+    L.push("//");
+    L.push("// Usage:  cscript launcher.js <yourscript.js>");
+    L.push("//         launcher.bat <yourscript.js>");
+    L.push("");
+
+    L.push("// ---------------------------------------------------------------------------");
+    L.push("// Bootstrap");
+    L.push("// ---------------------------------------------------------------------------");
+    L.push("");
+    L.push("var _script = WScript;");
+    L.push("function log(message) { _script.echo(message); }");
+    L.push("");
+    L.push("var CURRENT_PATH   = _script.ScriptFullName;");
+    L.push("var CURRENT_FOLDER = CURRENT_PATH.slice(0, CURRENT_PATH.lastIndexOf('\\\\') + 1);");
+    L.push("var ROOT_FOLDER    = CURRENT_FOLDER;");
+    L.push("");
+    L.push("// read_all_text_file: referenced by system.js (load_working_directory).");
+    L.push("function read_all_text_file(path) {");
+    L.push("    var _fso = new ActiveXObject('Scripting.FileSystemObject');");
+    L.push("    try {");
+    L.push("        var _f = _fso.OpenTextFile(path, 1);");
+    L.push("        if (_f.AtEndOfStream) { _f.Close(); return ''; }");
+    L.push("        var _s = _f.ReadAll(); _f.Close(); return _s;");
+    L.push("    } catch(e) { return null; }");
+    L.push("}");
+    L.push("");
+    L.push("// load() is a no-op: all libs are already inlined below.");
+    L.push("function load(modulename) {}");
+    L.push("");
+    L.push("// Source of core + polyfills + system, pre-escaped for inline HTA injection.");
+    L.push("// ui.js checks typeof _jsw_hta_inline_libs to decide whether to use this");
+    L.push("// or fall back to <script src=\"file:///...\"> references.");
+    L.push("var _jsw_hta_inline_libs = '" + escapeJsStr(htaLibsSrc) + "';");
+    L.push("");
+
+    // ---- inline each lib ----
+    for (var i = 0; i < libNames.length; i++) {
+        var libPath = libsSrc + "\\" + libNames[i] + ".js";
+        if (!fso.FileExists(libPath)) { continue; }
+        L.push("// ---------------------------------------------------------------------------");
+        L.push("// " + libNames[i] + ".js");
+        L.push("// ---------------------------------------------------------------------------");
+        L.push("");
+        L.push(readFile(libPath));
+        L.push("");
+    }
+
+    // ---- script executor ----
+    L.push("// ---------------------------------------------------------------------------");
+    L.push("// Script executor");
+    L.push("// ---------------------------------------------------------------------------");
+    L.push("");
+    L.push("(function() {");
+    L.push("    if (_script.Arguments.Count() === 0) {");
+    L.push("        log('Usage: cscript launcher.js <yourscript.js>');");
+    L.push("        _script.Quit(1);");
+    L.push("    }");
+    L.push("    var scriptPath = _script.Arguments(0);");
+    L.push("    log('executing:\\t' + scriptPath);");
+    L.push("    var src = read_all_text_file(scriptPath);");
+    L.push("    if (src !== null) { eval(src); }");
+    L.push("}());");
+
+    writeFile(distDir + "\\launcher.js", L.join("\r\n"));
+    echo("Written dist/launcher.js");
+
+    // ---- dist/launcher.bat ----
+    var bat = [
+        "@echo off",
+        "SET mypath=%~dp0",
+        "cscript.exe \"%mypath%launcher.js\" %*"
+    ].join("\r\n");
+    writeFile(distDir + "\\launcher.bat", bat);
+    echo("Written dist/launcher.bat");
+
+    echo("");
+    echo("=== Build complete ===");
+    echo("  dist/launcher.bat <yourscript.js>");
+    echo("  (two files total: launcher.js + launcher.bat)");
+
+}());

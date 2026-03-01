@@ -183,14 +183,93 @@ parse_date = function(ds,format){
 }
 
 
-http_request = function(url,method,reqListener){
+// ---------------------------------------------------------------------------
+// File-system helpers
+// ---------------------------------------------------------------------------
+
+// Reads all text from a file. Returns "" for an empty file, throws on error.
+read_text_file = function(path) {
+    var ForReading = 1;
+    var fso = new ActiveXObject("Scripting.FileSystemObject");
+    try {
+        var f = fso.OpenTextFile(path, ForReading);
+        if (f.AtEndOfStream) { f.Close(); return ""; }
+        var content = f.ReadAll();
+        f.Close();
+        return content;
+    } catch(exc) {
+        throw new Error("read_text_file: " + exc.message);
+    }
+};
+
+// Returns true if a file exists at path.
+file_exists = function(path) {
+    return (new ActiveXObject("Scripting.FileSystemObject")).FileExists(path);
+};
+
+// Returns true if a folder exists at path.
+folder_exists = function(path) {
+    return (new ActiveXObject("Scripting.FileSystemObject")).FolderExists(path);
+};
+
+// Deletes a file. Throws if the file does not exist.
+delete_file = function(path) {
+    (new ActiveXObject("Scripting.FileSystemObject")).DeleteFile(path);
+};
+
+// Creates a single folder. No-op if it already exists.
+create_folder = function(path) {
+    var fso = new ActiveXObject("Scripting.FileSystemObject");
+    if (!fso.FolderExists(path)) { fso.CreateFolder(path); }
+};
+
+// Writes an array of integers (0-255) to a binary file using ADODB.Stream.
+// Each integer is stored as one raw byte (iso-8859-1, no BOM).
+// Note: byte values 128-159 may not round-trip on some locales (Windows-1252 overlap).
+write_binary_file = function(path, bytes) {
+    var str = "";
+    for (var i = 0; i < bytes.length; i++) {
+        str += String.fromCharCode(bytes[i] & 0xFF);
+    }
+    var stream = new ActiveXObject("ADODB.Stream");
+    stream.Type    = 2;           // adTypeText
+    stream.CharSet = "iso-8859-1";
+    stream.Open();
+    stream.WriteText(str);
+    stream.SaveToFile(path, 2);   // adSaveCreateOverWrite
+    stream.Close();
+};
+
+// Reads a binary file and returns an array of integers (0-255).
+read_binary_file = function(path) {
+    var stream = new ActiveXObject("ADODB.Stream");
+    stream.Type = 1; // adTypeBinary
+    stream.Open();
+    stream.LoadFromFile(path);
+    if (stream.Size === 0) { stream.Close(); return []; }
+    var bytes = new VBArray(stream.Read()).toArray();
+    stream.Close();
+    return bytes;
+};
+
+// ---------------------------------------------------------------------------
+// http_request(url, method, callback [, body [, headers]])
+// callback(responseText, statusCode)
+// body    - optional string to send as request body (for POST/PUT)
+// headers - optional plain object of request headers to set
+http_request = function(url, method, reqListener, body, headers){
 	if(['GET','POST','PUT','DELETE'].indexOf(method) == -1){
-		
-		throw 'method not recognized:'+method;
-		
+		throw 'method not recognized:' + method;
 	}
 	var request = new ActiveXObject("MSXML2.XMLHTTP.6.0");
-	request.open(method, url,false);
-	request.send();
-	reqListener(request.responseText)
+	request.open(method, url, false);
+	if (headers) {
+		for (var key in headers) {
+			if (Object.prototype.hasOwnProperty.call(headers, key)) {
+				request.setRequestHeader(key, headers[key]);
+			}
+		}
+	}
+	request.send(body || null);
+	reqListener(request.responseText, request.status);
 }
