@@ -1950,7 +1950,7 @@ read_sheet_data = function (sheet,ncolumns,params){
 			
 	}
     
-    log("n° of columns: "+labels.length);
+    log("nï¿½ of columns: "+labels.length);
 	log(labels);
                         
     var row_counter = start_row+1;
@@ -2582,6 +2582,7 @@ open_hta = function(options, onClose) {
 //           assert.equal(1 + 1, 2);
 //           assert.ok(true);
 //       });
+//       skip("does something else", "blocked on a known bug, see TODO.md");
 //   });
 //
 //   _test.summary();   // always call at the end to print results
@@ -2590,6 +2591,7 @@ _test = (function() {
 
     var passed  = 0;
     var failed  = 0;
+    var skipped = 0;
     var current = '';   // current describe block name
 
     function _print(msg) {
@@ -2628,6 +2630,14 @@ _test = (function() {
         }
     };
 
+    // Records a test as skipped without running it. Use for tests blocked on a
+    // known bug (see TODO.md) or on a resource that is not always available
+    // (Office, network, interactive desktop). Never fails the run.
+    api.skip = function(name, reason) {
+        skipped++;
+        _print('  SKIP  ' + name + (reason ? ' (' + reason + ')' : ''));
+    };
+
     api.summary = function() {
         var total = passed + failed;
         _print('');
@@ -2638,7 +2648,15 @@ _test = (function() {
             _print('  PASSED : ' + passed + ' / ' + total);
             _print('  FAILED : ' + failed + ' / ' + total);
         }
+        if (skipped > 0) {
+            _print('  SKIPPED: ' + skipped);
+        }
         _print('=====================================');
+    };
+
+    // Counters, for suites that need to assert on the runner itself.
+    api.counts = function() {
+        return { passed: passed, failed: failed, skipped: skipped };
     };
 
     // -----------------------------------------------------------------------
@@ -2706,6 +2724,7 @@ _test = (function() {
 // Expose top-level helpers as globals so test files stay concise
 describe = function(name, fn) { _test.describe(name, fn); };
 it       = function(name, fn) { _test.it(name, fn); };
+skip     = function(name, reason) { _test.skip(name, reason); };
 assert   = _test.assert;
 
 
