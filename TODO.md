@@ -56,3 +56,8 @@ bug is fixed.
 - [ ] add a tool to "compile" a single file from library and the script devveloped, so it can be luacnhed just with cscript.exe myscript.exe
 - [ ] create an example whihc allows the user to select a folder than the script zip the files contained in the folder, upload them on pastebin or equivalent web site, or discord, than take the urlk and create an QR code out of it and display to the user.
 - [ ] study the possibility to have the compiled library + script inbase64 format and run cscript on it, like base64 decoding and run eval
+- [ ] `examples/qr-code-generator.js` currently renders the QR code via
+      api.qrserver.com (network required). Implement offline QR code
+      generation (a real ES3 encoder — data encoding modes, Reed-Solomon
+      error correction, mask selection — or an embedded/vendored generator)
+      so the example works with no network access.
