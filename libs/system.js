@@ -311,7 +311,10 @@ http_request = function(url, method, reqListener, body, headers, timeout){
 	if(['GET','POST','PUT','DELETE'].indexOf(method) == -1){
 		throw 'method not recognized:' + method;
 	}
-	var request = new ActiveXObject("MSXML2.XMLHTTP.6.0");
+	// ServerXMLHTTP, not plain XMLHTTP: XMLHTTP.6.0 does not implement
+	// setTimeouts() at all (it throws "Object doesn't support this property
+	// or method"), so a timeout could never actually take effect there.
+	var request = new ActiveXObject("MSXML2.ServerXMLHTTP.6.0");
 	request.open(method, url, false);
 	if (typeof timeout === "number") {
 		request.setTimeouts(timeout, timeout, timeout, timeout);

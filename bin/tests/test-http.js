@@ -112,8 +112,11 @@ describe("http_request - GET", function() {
     });
 
     it("throws when the request exceeds the given timeout", function() {
+        // 192.0.2.1 is TEST-NET-1 (RFC 5737): reserved so it never routes on
+        // the real internet. This makes the timeout deterministic and
+        // independent of httpbin's own responsiveness.
         assert.throws(function() {
-            request(BASE + "/delay/5", "GET", null, null, 1);
+            request("http://192.0.2.1/", "GET", null, null, 200);
         });
     });
 

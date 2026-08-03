@@ -39,6 +39,13 @@ reconstructed from the git history.
   and the oversized-key hashing path.
 - `bin/tests/run-tests.bat` now runs every suite, grouped by what each one
   requires (offline / disk / network / desktop).
+- `examples/json-encode-decode.js` — `JSON.stringify`/`JSON.parse` round-trip
+  on a local object, plus a real `http_request` GET against
+  jsonplaceholder.typicode.com (a free public API meant for exactly this kind
+  of example) parsed with `JSON.parse`.
+- `examples/base64-encode-decode.js` — a from-scratch ES3 base64
+  encode/decode (JScript has no `btoa`/`atob`), demonstrated on a string and
+  round-tripped through a file on disk.
 
 ### Fixed
 
@@ -153,6 +160,17 @@ reconstructed from the git history.
   with a relative path, so it only worked when invoked from inside `bin/`.
   Rewritten to resolve `launcher.js` via `%~dp0` and forward all arguments,
   matching `dist/launcher.bat`.
+- `http_request`'s `timeout` parameter (added earlier in this Unreleased
+  section) never actually worked: it called `setTimeouts()` on
+  `MSXML2.XMLHTTP.6.0`, which does not implement that method at all — it
+  always threw "Object doesn't support this property or method" before the
+  request was even sent. The one test covering it (`assert.throws(...)`)
+  passed anyway because it only checked that *some* exception was thrown, not
+  that it came from an actual timeout. Switched to `MSXML2.ServerXMLHTTP.6.0`,
+  which does implement `setTimeouts()`, and confirmed manually that a request
+  to an unroutable address now genuinely times out instead of hanging. The
+  test now targets `192.0.2.1` (TEST-NET-1, RFC 5737) instead of relying on
+  httpbin's `/delay/N` responding slower than a very short timeout.
 
 ### Changed
 
