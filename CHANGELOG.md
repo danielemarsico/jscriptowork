@@ -10,6 +10,54 @@ reconstructed from the git history.
 
 ### Added
 
+- `libs/console.js` — the `console` shim, split out of `polyfills.js` so it can
+  be loaded on its own (`load("console")`). It now writes through `log()` when
+  one exists, falling back to `WScript.Echo`, which makes it work inside an HTA
+  too and makes it honour `libs/log.js` levels; `console.debug` was added
+  alongside log/info/warn/error. `polyfills.js` is now purely a language-level
+  compatibility layer. **Scripts that relied on `load("polyfills")` alone for
+  `console` need to add `load("console")`** — the bundled `dist/launcher.js`
+  includes every lib, so nothing changes there.
+  Its tests moved from `test-polyfills.js` into `bin/tests/test-console.js`.
+- `libs/csv.js` — `csv_parse`/`csv_format` and `read_csv_file`/`write_csv_file`.
+  RFC 4180 quoting (embedded delimiters, quotes and newlines all round-trip),
+  CRLF/LF/CR line endings, BOM stripping, a `headers` option that maps rows to
+  objects both ways, plus `delimiter`, `trim`, `eol` and `quote_all`. Tabular
+  data no longer needs Excel and a COM server. `bin/tests/test-csv.js`.
+- `libs/log.js` — levels for `log()`: `log_debug`/`log_info`/`log_warn`/
+  `log_error`, `set_log_level()` (filtering, by name or number), `log_to_file()`
+  (tee every line to a file), `set_log_timestamps()`, and `set_log_sink()` for
+  routing output elsewhere. Loading it replaces the launcher's `log()`, which
+  keeps working unchanged: it logs at INFO with no prefix, so existing output is
+  byte-identical until a caller changes the level. `bin/tests/test-log.js`.
+- `libs/win.js` — Windows registry and process helpers: `reg_read` (with an
+  optional fallback instead of throwing), `reg_write`, `reg_delete`,
+  `reg_exists`; `run_command` (exit code) and `exec_command` (captured stdout,
+  stderr and exit code); `list_processes`/`process_exists`/`kill_process` over
+  WMI; `env` and `expand_env`. `exec_command` redirects to temp files rather
+  than reading `shell.Exec()`'s pipes, which deadlock as soon as a child fills a
+  pipe buffer. `bin/tests/test-win.js`.
+- Asynchronous and binary HTTP in `libs/system.js`:
+  - `http_request_async(url, method, callback, options)` sends the request and
+    returns a handle immediately, so several requests can be in flight at once;
+    `handle.wait([seconds])` blocks until the response arrives and fires the
+    callback, `handle.abort()` gives up, and `http_wait_all(handles, seconds)`
+    resolves a batch. Total cost becomes the slowest request rather than the sum.
+  - `http_request_bytes()` hands the response to the callback as a byte array,
+    and `http_download_file()` streams a response straight to disk without ever
+    materialising it in JScript (and writes nothing unless the status is 2xx).
+  - `sleep(ms)` — a guarded `WScript.Sleep` wrapper, since WSH has no
+    `setTimeout`.
+- `open_hta()` can stream progress back to CScript while the window is open:
+  the HTA calls `jsw_progress(value)` and CScript receives each value through
+  `options.onProgress`, tunable with `poll_ms`/`max_wait`. With progress
+  enabled the window is launched detached and CScript polls a temp file the HTA
+  appends to, instead of parking inside `shell.Run` until the window closes;
+  `jsw_return`/`onClose` still deliver the final value. `bin/tests/test-ui.js`
+  gained end-to-end progress tests plus parsing tests that need no desktop.
+- `examples/csv-report.js`, `examples/progress-window.js` and
+  `examples/system-info.js`, and a table of every example in the README.
+
 - `CLAUDE.md` — working notes for agents: the `load()`/`eval` scoping rules,
   JScript syntax constraints, testing and build instructions.
 - `TODO.md` — known bugs, gaps, and planned work.
@@ -236,6 +284,14 @@ reconstructed from the git history.
 
 ### Changed
 
+- `bin/tests/test-ui.js` no longer has to be skipped wholesale in CI: it detects
+  a headless run (`CI=true`, or `JSW_TEST_NO_DESKTOP`) and skips only the
+  describes that open a window, so its progress-parsing tests run everywhere.
+  `run-tests.bat` runs the suite unconditionally as a result.
+- `build.js` bundles the new libs (`console`, `log`, `csv`, `win`), and `ui.js`
+  injects `console.js` into generated HTAs alongside core/polyfills/system.
+- `http_request()`'s method validation moved into a shared `_http_check_method`,
+  so the accepted method list lives in one place. Behaviour is unchanged.
 - `core.js` no longer defines `Ext`/`Ext.util.JSON`/`Ext.encode`/`Ext.decode`
   unconditionally — nothing in the project used them. Moved to a new opt-in
   `libs/ext.js` (`load("ext")`, after `load("core")`), with its own

@@ -22,9 +22,14 @@ var BASE = "https://httpbin.org";
 // shapes used below, without touching the network.
 // ---------------------------------------------------------------------------
 
-(function() {
+// Bare assignment so the async/binary block further down can see it too.
+OFFLINE = (function() {
     var shellEnv = new ActiveXObject("WScript.Shell").Environment("Process");
-    var offline  = shellEnv("JSW_TEST_HTTP_OFFLINE") !== "" || shellEnv("CI") === "true";
+    return shellEnv("JSW_TEST_HTTP_OFFLINE") !== "" || shellEnv("CI") === "true";
+}());
+
+(function() {
+    var offline = OFFLINE;
     if (!offline) { return; }
 
     log("http_request tests running in OFFLINE stub mode - httpbin.org is not contacted.");
@@ -253,6 +258,192 @@ describe("http_request - POST (form body)", function() {
         assert.equal(data.form.a, "1");
         assert.equal(data.form.b, "2");
     });
+
+});
+
+// ---------------------------------------------------------------------------
+// Async and binary HTTP
+//
+// http_request_async / http_request_bytes / http_download_file talk to
+// ServerXMLHTTP directly and are not covered by the offline stub (which only
+// replaces http_request), so the network-dependent assertions are skipped when
+// running offline. The argument checking in front of them needs no network and
+// always runs: those calls throw before any COM object is created.
+// ---------------------------------------------------------------------------
+
+describe("http_request_async - argument checking", function() {
+
+    it("is defined", function() {
+        assert.equal(typeof http_request_async, "function");
+        assert.equal(typeof http_wait_all,      "function");
+    });
+
+    it("rejects an unsupported method before opening a connection", function() {
+        assert.throws(function() {
+            http_request_async("http://example.invalid/", "PATCH", function() {});
+        });
+        assert.throws(function() {
+            http_request_async("http://example.invalid/", "", function() {});
+        });
+    });
+
+});
+
+describe("http_request_bytes / http_download_file - argument checking", function() {
+
+    it("are defined", function() {
+        assert.equal(typeof http_request_bytes,  "function");
+        assert.equal(typeof http_download_file,  "function");
+    });
+
+    it("http_request_bytes rejects an unsupported method", function() {
+        assert.throws(function() {
+            http_request_bytes("http://example.invalid/", "PATCH", function() {});
+        });
+    });
+
+    it("http_download_file rejects an unsupported method", function() {
+        assert.throws(function() {
+            http_download_file("http://example.invalid/", "C:\\nope.bin", { method: "PATCH" });
+        });
+    });
+
+});
+
+describe("http_request_async - over the network", function() {
+
+    if (OFFLINE) {
+        var REASON = "needs real network; the offline stub only replaces http_request";
+        skip("returns a handle that is not done yet",        REASON);
+        skip("wait() fires the callback and reports done",   REASON);
+        skip("exposes status, text and headers on the handle", REASON);
+        skip("wait() is idempotent - the callback fires once", REASON);
+        skip("http_wait_all resolves several requests",      REASON);
+        skip("wait(seconds) returns false when it times out", REASON);
+        skip("abort() leaves the handle not done",           REASON);
+        return;
+    }
+
+    it("returns a handle that is not done yet", function() {
+        var h = http_request_async(BASE + "/get", "GET", function() {});
+        assert.equal(h.done, false);
+        assert.equal(h.url,  BASE + "/get");
+        assert.equal(typeof h.wait,  "function");
+        assert.equal(typeof h.abort, "function");
+        h.wait(30);
+    });
+
+    it("wait() fires the callback and reports done", function() {
+        var fired = 0;
+        var h = http_request_async(BASE + "/get", "GET", function() { fired++; });
+        assert.equal(h.wait(30), true);
+        assert.equal(fired,   1);
+        assert.equal(h.done,  true);
+    });
+
+    it("exposes status, text and headers on the handle", function() {
+        var h = http_request_async(BASE + "/get", "GET", function() {});
+        h.wait(30);
+        assert.equal(h.status, 200);
+        assert.ok(h.text.length > 0);
+        assert.ok(h.headers.length > 0);
+    });
+
+    it("wait() is idempotent - the callback fires once", function() {
+        var fired = 0;
+        var h = http_request_async(BASE + "/get", "GET", function() { fired++; });
+        h.wait(30);
+        h.wait(30);
+        assert.equal(fired, 1);
+    });
+
+    it("http_wait_all resolves several requests", function() {
+        var seen = [];
+        var handles = [
+            http_request_async(BASE + "/get?n=1", "GET", function() { seen.push(1); }),
+            http_request_async(BASE + "/get?n=2", "GET", function() { seen.push(2); })
+        ];
+        assert.equal(http_wait_all(handles, 30), true);
+        assert.equal(seen.length, 2);
+        assert.equal(handles[0].status, 200);
+        assert.equal(handles[1].status, 200);
+    });
+
+    it("wait(seconds) returns false when it times out", function() {
+        // 192.0.2.1 is RFC 5737 TEST-NET-1: reserved, never routes.
+        var h = http_request_async("http://192.0.2.1/", "GET", function() {});
+        assert.equal(h.wait(1), false);
+        assert.equal(h.done,    false);
+        h.abort();
+    });
+
+    it("abort() leaves the handle not done", function() {
+        var h = http_request_async("http://192.0.2.1/", "GET", function() {});
+        h.abort();
+        assert.equal(h.done, false);
+        assert.equal(h.wait(1), false);
+    });
+
+});
+
+describe("http_request_bytes / http_download_file - over the network", function() {
+
+    if (OFFLINE) {
+        var REASON2 = "needs real network; the offline stub only replaces http_request";
+        skip("hands the body to the callback as a byte array", REASON2);
+        skip("byte values are all in 0-255",                   REASON2);
+        skip("reports the status code",                        REASON2);
+        skip("downloads a file to disk",                       REASON2);
+        skip("returns the status and writes nothing on 404",   REASON2);
+        return;
+    }
+
+    var fso  = new ActiveXObject("Scripting.FileSystemObject");
+    var TMPD = fso.GetSpecialFolder(2).Path + "\\jscriptowork_http_test";
+    if (!fso.FolderExists(TMPD)) { fso.CreateFolder(TMPD); }
+
+    it("hands the body to the callback as a byte array", function() {
+        var got = null;
+        http_request_bytes(BASE + "/bytes/64", "GET", function(bytes) { got = bytes; });
+        assert.ok(Array.isArray(got));
+        assert.equal(got.length, 64);
+    });
+
+    it("byte values are all in 0-255", function() {
+        var got = null;
+        http_request_bytes(BASE + "/bytes/32", "GET", function(bytes) { got = bytes; });
+        var ok = true;
+        for (var i = 0; i < got.length; i++) {
+            if (typeof got[i] !== "number" || got[i] < 0 || got[i] > 255) { ok = false; }
+        }
+        assert.ok(ok, "byte array contains a value outside 0-255");
+    });
+
+    it("reports the status code", function() {
+        var status = null;
+        http_request_bytes(BASE + "/bytes/8", "GET", function(b, s) { status = s; });
+        assert.equal(status, 200);
+    });
+
+    it("downloads a file to disk", function() {
+        var path = TMPD + "\\downloaded.bin";
+        if (file_exists(path)) { delete_file(path); }
+        var status = http_download_file(BASE + "/bytes/128", path);
+        assert.equal(status, 200);
+        assert.ok(file_exists(path));
+        assert.equal(read_binary_file(path).length, 128);
+        delete_file(path);
+    });
+
+    it("returns the status and writes nothing on 404", function() {
+        var path = TMPD + "\\missing.bin";
+        if (file_exists(path)) { delete_file(path); }
+        var status = http_download_file(BASE + "/status/404", path);
+        assert.equal(status, 404);
+        assert.notOk(file_exists(path));
+    });
+
+    fso.DeleteFolder(TMPD, true);
 
 });
 

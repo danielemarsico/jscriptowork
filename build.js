@@ -56,11 +56,12 @@
     echo("Created dist/");
 
     // ---- libs to bundle into launcher.js (CScript side) ----
-    var libNames = ["core", "ext", "polyfills", "system", "helpers", "minimist", "ui", "base64", "crypto", "minitest"];
+    var libNames = ["core", "ext", "polyfills", "console", "log", "system", "csv",
+                    "helpers", "minimist", "ui", "win", "base64", "crypto", "minitest"];
 
     // ---- libs to embed inside HTAs (what ui.js previously loaded via <script src>) ----
-    // Must match the three files referenced in ui.js block 2.
-    var htaLibNames = ["core", "polyfills", "system"];
+    // Must match the files referenced in ui.js block 2.
+    var htaLibNames = ["core", "polyfills", "console", "system"];
     var htaLibsSrc = "";
     for (var h = 0; h < htaLibNames.length; h++) {
         var hp = libsSrc + "\\" + htaLibNames[h] + ".js";
