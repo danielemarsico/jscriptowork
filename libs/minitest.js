@@ -18,7 +18,6 @@ _test = (function() {
     var passed  = 0;
     var failed  = 0;
     var skipped = 0;
-    var current = '';   // current describe block name
 
     function _print(msg) {
         if (typeof log === 'function') {
@@ -39,10 +38,8 @@ _test = (function() {
     var api = {};
 
     api.describe = function(name, fn) {
-        current = name;
         _print('[' + name + ']');
         fn();
-        current = '';
     };
 
     api.it = function(name, fn) {

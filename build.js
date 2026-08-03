@@ -56,7 +56,7 @@
     echo("Created dist/");
 
     // ---- libs to bundle into launcher.js (CScript side) ----
-    var libNames = ["core", "polyfills", "system", "helpers", "minimist", "ui", "minitest"];
+    var libNames = ["core", "ext", "polyfills", "system", "helpers", "minimist", "ui", "minitest"];
 
     // ---- libs to embed inside HTAs (what ui.js previously loaded via <script src>) ----
     // Must match the three files referenced in ui.js block 2.

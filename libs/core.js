@@ -2,7 +2,9 @@
 if (!Array.prototype.indexOf) {
     
     Array.prototype.indexOf = function(obj, start) {
-        for (var i = (start || 0), j = this.length; i < j; i++) {
+        var j = this.length;
+        var n = start || 0;
+        for (var i = n >= 0 ? n : Math.max(j + n, 0); i < j; i++) {
             if (this[i] === obj) { return i; }
         }
         return -1;
@@ -753,43 +755,4 @@ replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
         };
     }
 }());
-
-
-Ext={};
-Ext.util = {};
-
-/**
- * @class Ext.util.JSON
- * Modified version of Douglas Crockford"s json.js that doesn"t
- * mess with the Object prototype
- * http://www.json.org/js.html
- * @singleton
- */
-Ext.util.JSON = {
-    encode : function(o) {
-        return JSON.stringify(o);
-    },
-
-    decode : function(s) {
-        return JSON.parse(s);
-    }
-};
-
-/**
- * Shorthand for {@link Ext.util.JSON#encode}
- * @param {Mixed} o The variable to encode
- * @return {String} The JSON string
- * @member Ext
- * @method encode
- */
-Ext.encode = Ext.util.JSON.encode;
-/**
- * Shorthand for {@link Ext.util.JSON#decode}
- * @param {String} json The JSON string
- * @param {Boolean} safe (optional) Whether to return null or throw an exception if the JSON is invalid.
- * @return {Object} The resulting object
- * @member Ext
- * @method decode
- */
-Ext.decode = Ext.util.JSON.decode;
 

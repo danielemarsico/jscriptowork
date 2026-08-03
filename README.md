@@ -16,6 +16,7 @@ Inside your script, load libraries with `load()`:
 
 ```js
 load("core");      // base polyfills (Array, String, JSON)
+load("polyfills"); // extended polyfill layer (Array, String, Object, Number, Math, Date, Function)
 load("system");    // file I/O, stdin/stdout, HTTP
 load("helpers");   // Excel, Access, Word COM automation
 ```
@@ -24,16 +25,57 @@ load("helpers");   // Excel, Access, Word COM automation
 
 ```
 bin/
-  launcher.js       entry point for running scripts
+  launcher.js       entry point: defines log(), load(), read_all_text_file(), then evals the target script
   launcher.bat      convenience batch wrapper
-  tests/            test scripts
+  tests/            test suites (run through bin/launcher.js) + run-tests.bat
 libs/
-  core.js           polyfills and JSON shim
-  system.js         file system, stdio, HTTP helpers
-  helpers.js        Excel / Access / Word automation
-  minimist.js       argument parsing
-templates/          report templates
+  core.js           ES5 baseline: Array/String basics + Crockford json2
+  ext.js            Ext.util.JSON / Ext.encode / Ext.decode compatibility shim (opt-in, unused elsewhere)
+  polyfills.js      extended layer: Array/String/Object/Number/Math/Date/Function + console shim
+  system.js         stdin/stdout, file system, binary files, HTTP, date formatting
+  helpers.js        interactive prompts + Excel / Access / Word COM automation
+  crypto.js         sha256, sha256_bytes, hmac_sha256
+  ui.js             open_hta(): native Windows GUI windows via mshta.exe
+  minimist.js       command-line argument parser (vendored)
+  minitest.js       describe / it / assert / skip test framework
+build.js            bundles libs + launcher into dist/
+dist/               generated: launcher.js (all libs inlined) + launcher.bat
+examples/           runnable examples
 ```
+
+Run `build.bat` (or `cscript.exe build.js`) to regenerate `dist/`, a
+self-contained two-file distributable (`launcher.js` + `launcher.bat`) that
+needs no separate `libs/` folder — every lib is inlined and `load()` becomes a
+no-op.
+
+## How `load()` works
+
+`bin/launcher.js` reads a lib's source and `eval()`s it **inside `load()`'s own
+function scope**, not at global scope:
+
+```js
+function load(modulename){
+    var path = ROOT_FOLDER + "/libs/" + modulename + ".js";
+    var lib  = read_all_text_file(path);
+    eval(lib);            // <-- runs inside load()'s scope
+}
+```
+
+This has two consequences that matter if you write your own lib or script:
+
+1. **Public functions must be bare assignments, not declarations.**
+
+   ```js
+   my_helper = function(a, b) { ... };   // GOOD — becomes a global
+   function my_helper(a, b) { ... }      // BAD  — dies with load()'s scope
+   ```
+
+2. **A top-level `var` in your script is local to the bootstrap, not global.**
+   To override a library global (e.g. stubbing `read_line` for a test), assign
+   **without** `var`.
+
+`dist/launcher.js` does not have this quirk — `load()` is a no-op there
+because every lib is already inlined at the top level.
 
 ## Polyfilled features (core.js)
 
@@ -70,7 +112,12 @@ The following are absent from JScript but can be added via the polyfill layer:
 
 **Object**
 - `Object.keys`, `Object.values`, `Object.entries`
-- `Object.assign`, `Object.create` (partial), `Object.freeze`, `Object.isFrozen`
+- `Object.assign`, `Object.create` (partial)
+- `Object.freeze`, `Object.isFrozen` — JScript objects cannot truly be frozen,
+  so `freeze` is a documented no-op (returns its argument unchanged) and
+  `isFrozen` reports `true` for any non-object (including `null`), matching
+  the "frozen" contract only in the narrow sense that primitives can't be
+  mutated. Treat both as advisory, not enforced.
 
 **Number**
 - `Number.isNaN`, `Number.isFinite`, `Number.isInteger`
@@ -122,11 +169,11 @@ These require a transpiler (e.g. Babel) and **cannot** be used directly in CScri
 
 ## Roadmap
 
-- [ ] `libs/polyfills.js` — extended polyfill layer (Array, String, Object, Number, Math, Date, Function)
-- [ ] `libs/minitest.js` — minimal test framework (describe / it / assert)
-- [ ] `bin/tests/test-polyfills.js` — test suite for all polyfills
-- [ ] `bin/tests/run-tests.bat` — batch runner for the full test suite
-- [ ] `libs/console.js` — `console.log/warn/error` shim
+The polyfill layer, test framework, and full test-suite runner listed above are
+done. What's outstanding — the `console` shim currently lives inside
+`polyfills.js` and could be split into its own `libs/console.js`, plus a
+longer backlog of features and known bugs — is tracked in
+[TODO.md](TODO.md).
 
 ## License
 

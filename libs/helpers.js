@@ -290,25 +290,25 @@ fill_sheet = function (sheet,tickets){
 
 if ncolumns is defined takes ncolumns from the sheet. if the label is empty it will use the letter of thecolumnn
 
-if ncolumsn is not defined takes at least 100 columns
+if ncolumsn is not defined takes at least 100 columns (override with params.max_columns)
 
 
-max 3000 rows
+max 3000 rows (override with params.max_rows)
 */
 read_sheet_data = function (sheet,ncolumns,params){
 	
-	var MAX_ROWS 		= 3000;
-	var MAX_COLUMNS		=  100;
-    
+	var MAX_ROWS 		= (params && params.max_rows)    || 3000;
+	var MAX_COLUMNS		= (params && params.max_columns) ||  100;
+
     //cycling on first row to get labels
     var isempty = false;
     var counter = 1;
-    var labels = [];      
-    
-    
+    var labels = [];
+
+
     var start_row = 1;
     if(params && params.start_row){
-        
+
         start_row = params.start_row;
     }
     

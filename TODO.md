@@ -4,45 +4,6 @@ Known bugs, gaps, and planned work. Items marked **[test]** have a `skip()`-ed
 test in `bin/tests/` that documents the intended behaviour — un-skip it once the
 bug is fixed.
 
-## Bugs
-
-### Low
-
-- [ ] `core.js`'s `Array.prototype.indexOf` polyfill ignores a negative `start`
-      argument (`start || 0`), unlike the spec.
-- [ ] `core.js` defines the globals `Ext`, `Ext.util.JSON`, `Ext.encode`, and
-      `Ext.decode` unconditionally; they are a compatibility shim nothing in the
-      project uses. Consider dropping or moving them to their own lib.
-- [ ] `Object.freeze` in `polyfills.js` is a documented no-op, and `Object.isFrozen`
-      reports non-objects as frozen. Both are unavoidable on JScript — keep, but
-      make the limitation visible in the README polyfill table.
-- [ ] `minitest.describe` tracks a `current` block name that is never used when
-      reporting an `it` result.
-- [ ] `read_sheet_data` hardcodes `MAX_ROWS = 3000` / `MAX_COLUMNS = 100`; make
-      them overridable via `params`.
-- [ ] `bin/launcher.js` and `bin/tests/launcher.js` are near-duplicates that have
-      already drifted (different error messages). Generate one from the other, or
-      make the tests use `bin/launcher.js`.
-- [ ] `bin/launcher.bat` and the older `bin/tests/test*.bat` wrappers print a
-      joke banner and call `cscript.exe launcher.js` with a relative path, so
-      they only work from inside `bin/`.
-- [ ] `bin/tests/test.js` and `bin/tests/test-httpconnect.js` predate `minitest`
-      and are manual scripts, not suites. Port them or delete them.
-
-## Documentation
-
-- [ ] `README.md` "Project structure" lists a `templates/` folder that no longer
-      exists (the report template was removed in the 2026-03-01 restructure).
-- [ ] `README.md` "Roadmap" is stale: `libs/polyfills.js`, `libs/minitest.js`,
-      `bin/tests/test-polyfills.js`, and `bin/tests/run-tests.bat` all exist.
-      Only `libs/console.js` is outstanding — and the `console` shim now lives in
-      `polyfills.js`, so the item should either be dropped or the shim split out.
-- [ ] `README.md` does not mention `libs/crypto.js`, `libs/ui.js`,
-      `libs/minitest.js`, `build.js`/`dist/`, or `examples/`.
-- [ ] Document the `load()`/`eval` scoping rule in `README.md` too — it is the
-      single most surprising thing about writing a lib here (currently only in
-      `CLAUDE.md`).
-
 ## Features
 
 - [ ] `libs/console.js` — split the `console` shim out of `polyfills.js` so it

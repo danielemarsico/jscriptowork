@@ -4,7 +4,8 @@
 //   Array.prototype  indexOf / filter / map / forEach / find / reduce
 //   String.prototype trim / startsWith
 //   JSON.stringify / JSON.parse (Crockford json2) and Date.prototype.toJSON
-//   Ext.encode / Ext.decode
+//
+// (Ext.encode / Ext.decode moved to libs/ext.js — see test-ext.js.)
 //
 // These tests do not care whether the engine supplied the method natively or
 // core.js polyfilled it — they assert the behaviour a caller can rely on.
@@ -50,6 +51,14 @@ describe("Array.prototype.indexOf", function() {
 
     it("never matches NaN", function() {
         assert.equal([NaN].indexOf(NaN), -1);
+    });
+
+    it("honours a negative start index (offset from the end)", function() {
+        assert.equal(["a", "b", "a", "c"].indexOf("a", -2), 2);
+    });
+
+    it("searches the whole array when the negative start is out of range", function() {
+        assert.equal(["a", "b"].indexOf("a", -99), 0);
     });
 
 });
@@ -502,33 +511,6 @@ describe("Date.prototype.toJSON", function() {
 
     it("serialises an invalid date as null", function() {
         assert.equal(JSON.stringify(new Date("not a date")), "null");
-    });
-
-});
-
-// ============================================================
-// Ext.encode / Ext.decode
-// ============================================================
-
-describe("Ext.encode / Ext.decode", function() {
-
-    it("exposes the Ext namespace", function() {
-        assert.equal(typeof Ext,          "object");
-        assert.equal(typeof Ext.util.JSON, "object");
-    });
-
-    it("Ext.encode matches JSON.stringify", function() {
-        var src = { a: 1, b: [2, 3] };
-        assert.equal(Ext.encode(src), JSON.stringify(src));
-    });
-
-    it("Ext.decode matches JSON.parse", function() {
-        assert.deepEqual(Ext.decode('{"a":1}'), JSON.parse('{"a":1}'));
-    });
-
-    it("round-trips", function() {
-        var src = { name: "test", values: [1, 2, 3] };
-        assert.deepEqual(Ext.decode(Ext.encode(src)), src);
     });
 
 });

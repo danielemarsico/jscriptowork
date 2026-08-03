@@ -136,6 +136,46 @@ reconstructed from the git history.
   the callback (`getAllResponseHeaders()`). It remains synchronous
   (`open(..., false)`) — a true async rewrite is tracked separately in
   `TODO.md` under Features.
+- `core.js`'s `Array.prototype.indexOf` polyfill ignored a negative `start`
+  (`start || 0`), unlike the spec, which treats a negative `fromIndex` as an
+  offset from the end of the array. Now computes `Math.max(length + start, 0)`
+  for negative values.
+- `minitest.describe` tracked a `current` block name that nothing ever read.
+  Removed the dead variable.
+- `read_sheet_data` hardcoded `MAX_ROWS = 3000` / `MAX_COLUMNS = 100`. Both are
+  now overridable via `params.max_rows` / `params.max_columns`.
+- `bin/launcher.js` and `bin/tests/launcher.js` were near-identical copies that
+  had already drifted once (different catch-all error messages). Removed the
+  `bin/tests/` copy entirely; every test suite now runs through
+  `bin/launcher.js` (`run-tests.bat` and `CLAUDE.md` updated accordingly), so
+  there is nothing left to drift.
+- `bin/launcher.bat` printed a joke banner and called `cscript.exe launcher.js`
+  with a relative path, so it only worked when invoked from inside `bin/`.
+  Rewritten to resolve `launcher.js` via `%~dp0` and forward all arguments,
+  matching `dist/launcher.bat`.
+
+### Changed
+
+- `core.js` no longer defines `Ext`/`Ext.util.JSON`/`Ext.encode`/`Ext.decode`
+  unconditionally — nothing in the project used them. Moved to a new opt-in
+  `libs/ext.js` (`load("ext")`, after `load("core")`), with its own
+  `test-ext.js` suite; `Ext.encode`/`Ext.decode` tests moved out of
+  `test-core.js` accordingly. Added `"ext"` to `libNames` in `build.js`.
+- `README.md`: refreshed "Project structure" (dropped the removed `templates/`
+  folder; added `libs/ext.js`, `crypto.js`, `ui.js`, `minitest.js`,
+  `build.js`/`dist/`, `examples/`), replaced the stale "Roadmap" checklist
+  (everything on it had shipped except the `console.js` split, now pointing at
+  `TODO.md`), documented the `load()`/`eval` scoping rule (previously only in
+  `CLAUDE.md`), and noted the `Object.freeze`/`Object.isFrozen` no-op
+  limitation in the polyfill list.
+
+### Removed
+
+- `bin/tests/test.js`, `bin/tests/test-httpconnect.js`, and their `.bat`
+  wrappers (`test.bat`, `test-httpconnect.bat`) — manual pre-`minitest`
+  scripts, superseded by the assertion-based `test-http.js`. Also removed
+  `test-decorate.bat`, an orphaned wrapper with no matching `.js` file, and
+  the empty, unused `httpconnect.properties` fixture.
 
 ## [2026-03-01] — UI, crypto, and the test framework
 

@@ -20,11 +20,11 @@ bin/
   launcher.js         entry point: defines log(), load(), read_all_text_file(), then evals the target script
   launcher.bat        batch wrapper
   tests/
-    launcher.js       copy of the launcher used by the test suites
-    test-*.js         test suites (see "Testing")
+    test-*.js         test suites (see "Testing"); run through bin/launcher.js
     run-tests.bat     runs every suite in order
 libs/
-  core.js             ES5 baseline: Array/String basics + Crockford json2 + Ext.encode/decode
+  core.js             ES5 baseline: Array/String basics + Crockford json2
+  ext.js              Ext.util.JSON / Ext.encode / Ext.decode compatibility shim (unused elsewhere)
   polyfills.js        extended layer: Array/String/Object/Number/Math/Date/Function + console shim
   system.js           stdin/stdout, file system, binary files, HTTP, date formatting
   helpers.js          interactive prompts + Excel / Access / Word COM automation
@@ -138,7 +138,7 @@ bin\tests\run-tests.bat
 Or a single suite:
 
 ```bat
-cscript.exe bin\tests\launcher.js bin\tests\test-core.js
+cscript.exe bin\launcher.js bin\tests\test-core.js
 ```
 
 **Tests cannot be run from Linux/macOS or from CI in this repo** — there is no
@@ -150,6 +150,7 @@ Suites and what they need:
 | Suite | Needs |
 |---|---|
 | `test-core.js` | nothing |
+| `test-ext.js` | nothing |
 | `test-polyfills.js` | nothing |
 | `test-minitest.js` | nothing |
 | `test-crypto.js` | nothing |
