@@ -338,9 +338,13 @@ http_request = function(url, method, reqListener, body, headers, timeout){
 // way to wait. Not available inside an HTA (no WScript object) - there the
 // call is a no-op so shared code does not blow up.
 sleep = function(ms) {
-    if (typeof WScript !== "undefined" && WScript.Sleep) {
-        WScript.Sleep(ms);
-    }
+    // Deliberately does NOT test `WScript.Sleep` for truthiness first.
+    // Property-getting a COM *method* raises "Object doesn't support this
+    // property or method" in JScript - the guard would throw before the call
+    // it was meant to protect. typeof on the global name is safe, and is all
+    // that is needed: WScript exists under WSH and not inside an HTA.
+    if (typeof WScript === "undefined") { return; }
+    WScript.Sleep(ms);
 };
 
 // ---------------------------------------------------------------------------

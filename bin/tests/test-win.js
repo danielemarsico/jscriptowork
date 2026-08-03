@@ -317,7 +317,9 @@ describe("kill_process", function() {
                   ", now=" + running.length + ")");
 
         var target = running[running.length - 1].pid;
-        assert.equal(kill_process(target), 1);
+        assert.equal(kill_process(target), 1,
+            "kill_process(" + target + ") terminated nothing - Terminate() was " +
+            "refused or is unavailable on the WMI instance");
         sleep(500);
 
         var still_there = false;
