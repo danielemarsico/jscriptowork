@@ -83,6 +83,59 @@ reconstructed from the git history.
   `sha256("abc")` is `ba7816bf…f20015ad`, not `ba7816bf…df54f6b8`; RFC 4231 test
   case 2 is `5bdcc146…64ec3843`, not `5bdcc146…64a37827`. No change to
   `libs/crypto.js` was needed.
+- `read_all_text_file` in `bin/launcher.js` and `bin/tests/launcher.js` had
+  `f.Close()` placed after its `return` statements, so it was dead code and the
+  file handle was never released. This intermittently made a later
+  `delete_file()` on the same path throw "Permission denied" (reproduced in
+  `test-system.js`'s `load_properties` cleanup). Restructured so the handle is
+  always closed, and the catch-all error message now includes the path on both
+  copies (`bin/launcher.js` previously just said `"file doesn't exist"`, which
+  was misleading for other failure causes).
+- `stdin`/`stdout` (`libs/system.js`) were declared with `var`, so — like the
+  `randomString` bug above — they were scoped to `load()` and not reachable as
+  globals under `bin/launcher.js`. Converted to bare assignments.
+- `read(n)` (`libs/system.js`) ignored its argument and always read a single
+  character (`stdin.Read(1)`). Now reads `stdin.Read(n)`.
+- `read_all()` (`libs/system.js`) returned the literal string `"end of stream"`
+  at end of stream, indistinguishable from real input. Now returns `""`.
+- `list_folders` (`libs/system.js`) enumerated `folder.files`, so it returned
+  files, not folders, and assigned its `fso` without `var` (a leaked global).
+  Split into `list_files` (the corrected name for the existing files-listing
+  behaviour) and a new `list_subfolders` (lists actual subfolders);
+  `list_folders` is kept as an alias of `list_files` for backward
+  compatibility.
+- `load_properties` (`libs/system.js`) dropped any line whose value contained
+  `=` (it required exactly two `split("=")` parts), had no comment or
+  blank-line handling, and built the `eval()`-ed source without escaping
+  quotes/backslashes in values. Now splits on the first `=` only, skips blank
+  lines and `#`-prefixed comments, and escapes `\` and `"` in values.
+- `format_date` (`libs/system.js`) documented `YY/MM/DD` and `YYYYMMDD` but only
+  implemented `YYYY/MM/DD`. Both are now implemented.
+- `write_text_to_file` (`libs/system.js`) always opened files in ASCII mode
+  (throwing on characters outside the system codepage) and never closed the
+  handle if `Write` threw. Added an optional `unicode` parameter (UTF-16LE,
+  opt-in to stay backward compatible) and a `try/finally` around `Write`.
+  Paired with `read_text_file`, which now opens with `TristateUseDefault` so it
+  auto-detects a Unicode BOM without affecting plain-ASCII reads.
+- `fill_sheet` (`libs/helpers.js`) indexed a 27-character `alphabet` string for
+  its formatting-copy range, so sheets with more than 26 columns got an empty
+  column letter and an invalid range. Added `_column_letter(n)`, a proper
+  1-based-to-Excel-letter converter (`A`..`Z`, `AA`, `AB`, ...), and used it for
+  that range.
+- `do_in_access` (`libs/helpers.js`) declared `var db` twice — once for the
+  database filename, once for `access.CurrentDb()`. Renamed the first to
+  `database_path`.
+- `minimist` logged `'procssing args'` (typo included) on every argument
+  (`libs/minimist.js`). Removed the debug line.
+- `minimist` threw when called with a single argument, because it read
+  `opts['unknown']` unguarded. `opts` now defaults to `{}`, matching upstream
+  minimist's optional-`opts` behaviour.
+- `http_request` (`libs/system.js`) had no timeout and never exposed response
+  headers. Added an optional `timeout` parameter (via
+  `MSXML2.XMLHTTP`'s `setTimeouts`) and a third `responseHeaders` argument to
+  the callback (`getAllResponseHeaders()`). It remains synchronous
+  (`open(..., false)`) — a true async rewrite is tracked separately in
+  `TODO.md` under Features.
 
 ## [2026-03-01] — UI, crypto, and the test framework
 

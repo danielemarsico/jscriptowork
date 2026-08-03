@@ -1,6 +1,7 @@
 
 minimist = function(args,opts){
-    
+
+    opts = opts || {};
     var flags = { bools : {}, strings : {}, unknownFn: null };
     
     
@@ -122,7 +123,6 @@ minimist = function(args,opts){
     
     for (var i = 0; i < args.length; i++) {
         var arg = args[i];
-        log('procssing args')
         if (/^--.+=/.test(arg)) {
             // Using [\s\S] instead of . because js doesn't support the
             // 'dotall' regex modifier. See:

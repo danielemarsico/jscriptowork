@@ -1,7 +1,5 @@
 // test-minimist.js - Tests for libs/minimist.js
 //
-// Note: minimist requires an options object; every call below passes one.
-//
 // Run via:  cscript.exe launcher.js test-minimist.js
 
 load("core");
@@ -337,8 +335,11 @@ describe("minimist - short options", function() {
 
 describe("minimist - options object", function() {
 
-    skip("treats the options argument as optional",
-         "minimist reads opts['unknown'] unguarded and throws when called with one argument (TODO.md)");
+    it("treats the options argument as optional", function() {
+        var argv = minimist(["--foo", "bar", "positional"]);
+        assert.equal(argv.foo, "bar");
+        assert.deepEqual(argv._, ["positional"]);
+    });
 
 });
 

@@ -13,12 +13,13 @@ var BASE = "https://httpbin.org";
 // Helper: run a request and capture response text + status synchronously.
 // Returns { body: string, status: number }
 // ---------------------------------------------------------------------------
-function request(url, method, body, headers) {
-    var result = { body: null, status: null };
-    http_request(url, method, function(responseText, statusCode) {
-        result.body   = responseText;
-        result.status = statusCode;
-    }, body, headers);
+function request(url, method, body, headers, timeout) {
+    var result = { body: null, status: null, headers: null };
+    http_request(url, method, function(responseText, statusCode, responseHeaders) {
+        result.body    = responseText;
+        result.status  = statusCode;
+        result.headers = responseHeaders;
+    }, body, headers, timeout);
     return result;
 }
 
@@ -102,6 +103,18 @@ describe("http_request - GET", function() {
         var data = parseJSON(res.body);
         assert.equal(data.args.foo, "bar");
         assert.equal(data.args.n,   "42");
+    });
+
+    it("exposes response headers to the callback", function() {
+        var res = request(BASE + "/get", "GET");
+        assert.equal(typeof res.headers, "string");
+        assert.ok(res.headers.toLowerCase().indexOf("content-type") !== -1, res.headers);
+    });
+
+    it("throws when the request exceeds the given timeout", function() {
+        assert.throws(function() {
+            request(BASE + "/delay/5", "GET", null, null, 1);
+        });
     });
 
 });

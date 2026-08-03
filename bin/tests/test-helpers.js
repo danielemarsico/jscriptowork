@@ -226,8 +226,13 @@ describe("fill_sheet", function() {
         assert.equal(sheet._value(2, 2), true);
     });
 
-    skip("handles more than 26 columns",
-         "fill_sheet indexes a 27-character alphabet string and produces an empty column letter past Z (TODO.md)");
+    it("handles more than 26 columns", function() {
+        var sheet  = mock_sheet();
+        var record = {};
+        for (var i = 1; i <= 27; i++) { record["col" + i] = i; }
+        fill_sheet(sheet, [record]);
+        assert.deepEqual(sheet._copies(), ["A:A -> B:AA"]);
+    });
 
 });
 
@@ -552,15 +557,15 @@ describe("select_file_from_folder", function() {
         var late = tmp("late.log");
         var i    = 0;
         stub_input(["", ""]);
-        var real_list = list_folders;
-        list_folders = function(path) {
+        var real_list = list_files;
+        list_files = function(path) {
             i++;
             if (i === 1) { return []; }
             return real_list(path);
         };
         write_text_to_file("x", late);
         var out = select_file_from_folder(TEMP, "pick", /late\.log$/);
-        list_folders = real_list;
+        list_files = real_list;
         restore_input();
         delete_file(late);
         assert.ok(out.indexOf("late.log") !== -1, "unexpected selection: " + out);

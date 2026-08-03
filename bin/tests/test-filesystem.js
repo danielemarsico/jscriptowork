@@ -86,6 +86,24 @@ describe("write_text_to_file", function() {
         assert.equal(parsed.n,   42);
     });
 
+    it("round-trips non-ASCII content when unicode=true", function() {
+        var p   = tmp("unicode.txt");
+        var src = "café 中文 😀";
+        write_text_to_file(src, p, true);
+        assert.equal(read_text_file(p), src);
+    });
+
+    it("throws on content outside the system codepage without unicode=true", function() {
+        var p = tmp("ascii_unrepresentable.txt");
+        // Built from code points rather than a literal, so this is immune to
+        // any mis-decoding of non-ASCII source characters when the test file
+        // itself is loaded (the very class of bug this fix addresses).
+        var cjk = String.fromCharCode(0x4E2D) + String.fromCharCode(0x6587);
+        assert.throws(function() {
+            write_text_to_file(cjk, p);
+        });
+    });
+
 });
 
 // ---------------------------------------------------------------------------
@@ -190,19 +208,19 @@ describe("create_folder", function() {
 });
 
 // ---------------------------------------------------------------------------
-// list_folders (lists files in a directory)
+// list_files
 // ---------------------------------------------------------------------------
 
-describe("list_folders", function() {
+describe("list_files", function() {
 
     it("returns an array", function() {
-        assert.ok(Array.isArray(list_folders(TEMP)));
+        assert.ok(Array.isArray(list_files(TEMP)));
     });
 
     it("includes a file that was just written", function() {
         var p    = tmp("listed.txt");
         write_text_to_file("x", p);
-        var list = list_folders(TEMP);
+        var list = list_files(TEMP);
         var found = list.some(function(entry) {
             return entry.indexOf("listed.txt") !== -1;
         });
@@ -213,9 +231,60 @@ describe("list_folders", function() {
         var p = tmp("unlisted.txt");
         write_text_to_file("x", p);
         delete_file(p);
-        var list = list_folders(TEMP);
+        var list = list_files(TEMP);
         var found = list.some(function(entry) {
             return entry.indexOf("unlisted.txt") !== -1;
+        });
+        assert.notOk(found);
+    });
+
+    it("does not include subfolders", function() {
+        var sub = TEMP + "\\list_files_subdir";
+        create_folder(sub);
+        var found = list_files(TEMP).some(function(entry) {
+            return entry.indexOf("list_files_subdir") !== -1;
+        });
+        assert.notOk(found);
+    });
+
+});
+
+// ---------------------------------------------------------------------------
+// list_folders (back-compat alias for list_files — see TODO.md)
+// ---------------------------------------------------------------------------
+
+describe("list_folders", function() {
+
+    it("is an alias for list_files", function() {
+        assert.equal(list_folders, list_files);
+    });
+
+});
+
+// ---------------------------------------------------------------------------
+// list_subfolders
+// ---------------------------------------------------------------------------
+
+describe("list_subfolders", function() {
+
+    it("returns an array", function() {
+        assert.ok(Array.isArray(list_subfolders(TEMP)));
+    });
+
+    it("includes a subfolder that was just created", function() {
+        var sub = TEMP + "\\a_real_subfolder";
+        create_folder(sub);
+        var found = list_subfolders(TEMP).some(function(entry) {
+            return entry.indexOf("a_real_subfolder") !== -1;
+        });
+        assert.ok(found);
+    });
+
+    it("does not include a file", function() {
+        var p = tmp("not_a_folder.txt");
+        write_text_to_file("x", p);
+        var found = list_subfolders(TEMP).some(function(entry) {
+            return entry.indexOf("not_a_folder.txt") !== -1;
         });
         assert.notOk(found);
     });

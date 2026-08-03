@@ -13,7 +13,7 @@ select_file_from_folder = function (folder, message, pattern){//return selected 
         write_line(message);
         read_line();
                     
-        file_list = list_folders(folder).filter(function(elem){
+        file_list = list_files(folder).filter(function(elem){
                    
             return elem.match(pattern);
        
@@ -108,7 +108,7 @@ read_date_from_input = function (){//format YYYYMMDD
 
 select_files_from_folder = function (folder, message, pattern){//return file paths matching patterns
     
-    var file_list = list_folders(folder).filter(function(elem){
+    var file_list = list_files(folder).filter(function(elem){
                    
             return elem.match(pattern);
        
@@ -156,11 +156,11 @@ do_in_access = function (to_do,database_filename){
 	access.Visible = false;
     
     
-	var db = typeof database_filename !== "undefined" ? database_filename
+	var database_path = typeof database_filename !== "undefined" ? database_filename
 		: (typeof DATABASEPATH !== "undefined" ? DATABASEPATH : "");
-	
-    access.OpenCurrentDataBase(CURRENT_FOLDER+"/"+db);
-    
+
+    access.OpenCurrentDataBase(CURRENT_FOLDER+"/"+database_path);
+
     var db = access.CurrentDb();
   
     try{
@@ -214,6 +214,18 @@ do_in_word = function (to_do){
 
 alphabet = "_ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
+// Converts a 1-based column number to its Excel column letter(s), so callers
+// are not limited to the 26 columns alphabet.charAt() can address (A..Z).
+_column_letter = function(n){
+	var letter = "";
+	while(n > 0){
+		var rem = (n - 1) % 26;
+		letter = String.fromCharCode(65 + rem) + letter;
+		n = Math.floor((n - 1) / 26);
+	}
+	return letter;
+}
+
 
 //fill an Excel sheet with data form array of object, labels taken from the first element of the array
 fill_sheet = function (sheet,tickets){
@@ -246,7 +258,7 @@ fill_sheet = function (sheet,tickets){
 	
     
     
-    var area = "B:"+alphabet.charAt(ncolumns);
+    var area = "B:"+_column_letter(ncolumns);
    
     
     

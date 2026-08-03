@@ -47,10 +47,13 @@ describe("format_date", function() {
         assert.equal(format_date(d, "DD-MM-YYYY"), d.toString());
     });
 
-    skip("formats a date as YYYYMMDD",
-         "the comment on libs/system.js:146 promises it but only YYYY/MM/DD is implemented (TODO.md)");
-    skip("formats a date as YY/MM/DD",
-         "the comment on libs/system.js:146 promises it but only YYYY/MM/DD is implemented (TODO.md)");
+    it("formats a date as YYYYMMDD", function() {
+        assert.equal(format_date(new Date(2020, 0, 2), "YYYYMMDD"), "20200102");
+    });
+
+    it("formats a date as YY/MM/DD", function() {
+        assert.equal(format_date(new Date(2020, 0, 2), "YY/MM/DD"), "20/01/02");
+    });
 
 });
 
@@ -145,10 +148,23 @@ describe("load_properties", function() {
         assert.equal(typeof not_in_the_properties_file, "undefined");
     });
 
-    skip("keeps '=' characters inside a value",
-         "load_properties requires exactly two split('=') parts, so 'k=a=b' is silently dropped (TODO.md)");
-    skip("ignores # comment lines",
-         "comment lines are not recognised; '#x=y' would define a global named '#x' (TODO.md)");
+    it("keeps '=' characters inside a value", function() {
+        var EQ_NAME = "_test_system_eq.properties";
+        var EQ_PATH = CURRENT_FOLDER + "/" + EQ_NAME;
+        write_text_to_file("k=a=b\n", EQ_PATH);
+        load_properties(EQ_NAME);
+        assert.equal(k, "a=b");
+        delete_file(EQ_PATH);
+    });
+
+    it("ignores # comment lines", function() {
+        var CMT_NAME = "_test_system_comments.properties";
+        var CMT_PATH = CURRENT_FOLDER + "/" + CMT_NAME;
+        write_text_to_file("# a comment\nalpha=1\n", CMT_PATH);
+        load_properties(CMT_NAME);
+        assert.equal(alpha, "1");
+        delete_file(CMT_PATH);
+    });
 
     delete_file(PROPS_PATH);
 
@@ -210,9 +226,29 @@ describe("working directory", function() {
 
 describe("stdio helpers", function() {
 
-    // Reading from stdin would block an unattended run, so only the surface is
-    // checked here; the interactive prompts are exercised in test-helpers.js
-    // against a stubbed read_line.
+    // Reading from the real stdin would block an unattended run, so read(n)
+    // and read_all() are exercised against a stubbed `stdin` object (assigned
+    // without `var`, per the load()/eval scoping rule in CLAUDE.md).
+    var _real_stdin = stdin;
+
+    function stub_stdin(text) {
+        var pos = 0;
+        var obj = {};
+        obj.AtEndOfStream = (pos >= text.length);
+        obj.Read = function(n) {
+            var chunk = text.substr(pos, n);
+            pos += chunk.length;
+            obj.AtEndOfStream = (pos >= text.length);
+            return chunk;
+        };
+        obj.ReadAll = function() {
+            var rest = text.substr(pos);
+            pos = text.length;
+            obj.AtEndOfStream = true;
+            return rest;
+        };
+        stdin = obj;
+    }
 
     it("exposes the stdin/stdout stream objects", function() {
         assert.notEqual(typeof stdin,  "undefined");
@@ -232,10 +268,25 @@ describe("stdio helpers", function() {
         assert.doesNotThrow(function() { write_line(""); });
     });
 
-    skip("read(n) returns n characters",
-         "read() ignores its argument and always reads a single character (TODO.md)");
-    skip("read_all() returns null at end of stream",
-         "read_all() returns the literal string 'end of stream' as a sentinel (TODO.md)");
+    it("read(n) returns n characters", function() {
+        stub_stdin("hello world");
+        assert.equal(read(5), "hello");
+        assert.equal(read(1), " ");
+        assert.equal(read(5), "world");
+        stdin = _real_stdin;
+    });
+
+    it("read_all() returns an empty string at end of stream", function() {
+        stub_stdin("");
+        assert.equal(read_all(), "");
+        stdin = _real_stdin;
+    });
+
+    it("read_all() reads everything left in the stream", function() {
+        stub_stdin("rest of the input");
+        assert.equal(read_all(), "rest of the input");
+        stdin = _real_stdin;
+    });
 
 });
 

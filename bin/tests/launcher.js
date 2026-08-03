@@ -13,17 +13,14 @@ var ROOT_FOLDER                = CURRENT_FOLDER.slice(0, CURRENT_PATH.indexOf(AP
 
 
 function read_all_text_file(path){
-    var ForReading = 1, ForWriting = 2;
+    var ForReading = 1;
     var fso = new ActiveXObject("Scripting.FileSystemObject");
     try{
-		
+
 		var f = fso.OpenTextFile(path, ForReading);
-		if (f.AtEndOfStream)
-			return ("");
-		else
-			return (f.ReadAll());
-		
+		var content = f.AtEndOfStream ? "" : f.ReadAll();
 		f.Close();
+		return content;
 	}
 	catch(exc){
 		log("cannot load file: " + path);
