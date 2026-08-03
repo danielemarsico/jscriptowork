@@ -29,6 +29,7 @@ libs/
   system.js           stdin/stdout, file system, binary files, HTTP, date formatting
   helpers.js          interactive prompts + Excel / Access / Word COM automation
   crypto.js           sha256, sha256_bytes, hmac_sha256
+  base64.js           base64_encode/decode, base64_encode_bytes/decode_bytes (no native btoa/atob)
   ui.js               open_hta(): native Windows GUI windows via mshta.exe
   minimist.js         command-line argument parser (vendored)
   minitest.js         describe / it / assert / skip test framework
@@ -154,6 +155,7 @@ Suites and what they need:
 | `test-polyfills.js` | nothing |
 | `test-minitest.js` | nothing |
 | `test-crypto.js` | nothing |
+| `test-base64.js` | nothing |
 | `test-minimist.js` | nothing |
 | `test-system.js` | temp folder write access |
 | `test-filesystem.js` | temp folder write access |

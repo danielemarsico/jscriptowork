@@ -30,6 +30,10 @@ echo --- crypto ---
 cscript.exe %launcher% %mypath%test-crypto.js
 
 echo.
+echo --- base64 ---
+cscript.exe %launcher% %mypath%test-base64.js
+
+echo.
 echo --- minimist ---
 cscript.exe %launcher% %mypath%test-minimist.js
 

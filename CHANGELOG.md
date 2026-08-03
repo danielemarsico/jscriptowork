@@ -43,9 +43,14 @@ reconstructed from the git history.
   on a local object, plus a real `http_request` GET against
   jsonplaceholder.typicode.com (a free public API meant for exactly this kind
   of example) parsed with `JSON.parse`.
-- `examples/base64-encode-decode.js` — a from-scratch ES3 base64
-  encode/decode (JScript has no `btoa`/`atob`), demonstrated on a string and
-  round-tripped through a file on disk.
+- `libs/base64.js` — `base64_encode`/`base64_decode` (UTF-8 strings) and
+  `base64_encode_bytes`/`base64_decode_bytes` (byte arrays, matching the
+  `write_binary_file`/`read_binary_file` convention). JScript has no native
+  `btoa`/`atob`. Added `"base64"` to `libNames` in `build.js`.
+  `bin/tests/test-base64.js` covers the RFC 4648 known-answer vectors plus
+  UTF-8/surrogate-pair round-trips.
+- `examples/base64-encode-decode.js` — encode/decode a string and round-trip
+  a file's contents through `libs/base64.js`.
 
 ### Fixed
 
@@ -171,6 +176,10 @@ reconstructed from the git history.
   to an unroutable address now genuinely times out instead of hanging. The
   test now targets `192.0.2.1` (TEST-NET-1, RFC 5737) instead of relying on
   httpbin's `/delay/N` responding slower than a very short timeout.
+- `crypto.js` was never listed in `libNames` in `build.js`, so `sha256`,
+  `sha256_bytes`, and `hmac_sha256` were silently missing from
+  `dist/launcher.js` despite having their own documented lib and test suite.
+  Added `"crypto"` to `libNames`.
 
 ### Changed
 
