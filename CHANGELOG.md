@@ -96,6 +96,17 @@ reconstructed from the git history.
 
 ### Fixed
 
+- `build.js` stamped `// Generated: <date time>` into the header of
+  `dist/launcher.js`, which made the build non-reproducible: the CI step that
+  rebuilds `dist/` and runs `git diff --exit-code -- dist/` failed on every run
+  — the only difference being the clock reading — regardless of whether `dist/`
+  was actually stale. It also meant simply running the test suite (which
+  rebuilds `dist/` via `test-build.js`) dirtied the working tree. Replaced with
+  a fixed provenance line, so `dist/launcher.js` is now byte-for-byte
+  reproducible from the contents of `libs/` alone.
+  `bin/tests/test-build.js` gained a regression guard: it runs the build a
+  second time and asserts byte-identical output, and asserts the header carries
+  no timestamp.
 - `parse_date` (`libs/system.js`) read `d.substring(...)` before `d` was
   assigned and ignored its own `ds` parameter, so every call threw
   `TypeError: 'd' is undefined`. Now uses `ds` for the substrings, declares `d`
