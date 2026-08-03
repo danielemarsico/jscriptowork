@@ -31,12 +31,16 @@ bin/
 libs/
   core.js           ES5 baseline: Array/String basics + Crockford json2
   ext.js            Ext.util.JSON / Ext.encode / Ext.decode compatibility shim (opt-in, unused elsewhere)
-  polyfills.js      extended layer: Array/String/Object/Number/Math/Date/Function + console shim
-  system.js         stdin/stdout, file system, binary files, HTTP, date formatting
+  polyfills.js      extended layer: Array/String/Object/Number/Math/Date/Function
+  console.js        console.log/info/warn/error/debug shim
+  log.js            log() levels (debug/info/warn/error) + tee to a file
+  system.js         stdin/stdout, file system, binary files, HTTP (sync, async, binary), date formatting
+  csv.js            csv_parse/csv_format, read_csv_file/write_csv_file (no Excel needed)
   helpers.js        interactive prompts + Excel / Access / Word COM automation
-  crypto.js         sha256, sha256_bytes, hmac_sha256
+  win.js            registry, process listing/killing, command execution with captured output
+  crypto.js         sha256, sha256_bytes, hmac_sha256, hmac_sha256_bytes
   base64.js         base64_encode/decode, base64_encode_bytes/decode_bytes (no native btoa/atob)
-  ui.js             open_hta(): native Windows GUI windows via mshta.exe
+  ui.js             open_hta(): native Windows GUI windows via mshta.exe, with live progress
   minimist.js       command-line argument parser (vendored)
   minitest.js       describe / it / assert / skip test framework
 build.js            bundles libs + launcher into dist/
@@ -133,7 +137,7 @@ The following are absent from JScript but can be added via the polyfill layer:
 **Other**
 - `Date.now()`
 - `Function.prototype.bind`
-- `console` (shim to `WScript.Echo` / `StdOut`)
+- `console` (shim to `WScript.Echo` / `StdOut`) — in `libs/console.js`
 
 ### Features that CANNOT be polyfilled (syntax-level)
 
@@ -168,13 +172,27 @@ These require a transpiler (e.g. Babel) and **cannot** be used directly in CScri
 - `typeof` on undeclared variables works, but behaviour may differ in edge cases
 - `'use strict'` is accepted but not fully enforced by JScript
 
+## Examples
+
+`examples/` holds runnable scripts — `examples\run.bat <name>.js`:
+
+| Example | Shows |
+|---|---|
+| `hello-world.js` | a native window via `open_hta()` |
+| `progress-window.js` | streaming progress out of an HTA while it is still open |
+| `csv-report.js` | reading/filtering/writing CSV, with log levels and a log file |
+| `system-info.js` | registry, environment, subprocess output, process listing |
+| `json-encode-decode.js` | `JSON.stringify`/`parse` plus a real HTTP GET |
+| `base64-encode-decode.js` | base64 over strings and over file bytes |
+| `qr-code-generator.js` | prompt for a URL, render its QR code in a window |
+
 ## Roadmap
 
-The polyfill layer, test framework, and full test-suite runner listed above are
-done. What's outstanding — the `console` shim currently lives inside
-`polyfills.js` and could be split into its own `libs/console.js`, plus a
-longer backlog of features and known bugs — is tracked in
-[TODO.md](TODO.md).
+The polyfill layer, test framework, full test-suite runner, and the feature
+backlog that was outstanding — the `console` shim split into `libs/console.js`,
+CSV helpers, log levels, async and binary HTTP, HTA progress streaming, and
+registry/process helpers — are all done. Remaining known bugs and ideas are
+tracked in [TODO.md](TODO.md).
 
 ## License
 

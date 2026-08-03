@@ -750,33 +750,6 @@ describe("Function.prototype.bind", function() {
 
 });
 
-// ============================================================
-// console shim
-// ============================================================
-
-describe("console shim", function() {
-
-    it("console.log is a function", function() {
-        assert.equal(typeof console.log, "function");
-    });
-
-    it("console.warn is a function", function() {
-        assert.equal(typeof console.warn, "function");
-    });
-
-    it("console.error is a function", function() {
-        assert.equal(typeof console.error, "function");
-    });
-
-    it("console.info is a function", function() {
-        assert.equal(typeof console.info, "function");
-    });
-
-    it("console.log does not throw", function() {
-        assert.doesNotThrow(function() { console.log("test", 123, {a: 1}); });
-    });
-
-});
 
 // ============================================================
 // Print summary

@@ -25,7 +25,11 @@ bin/
 libs/
   core.js             ES5 baseline: Array/String basics + Crockford json2
   ext.js              Ext.util.JSON / Ext.encode / Ext.decode compatibility shim (unused elsewhere)
-  polyfills.js        extended layer: Array/String/Object/Number/Math/Date/Function + console shim
+  polyfills.js        extended layer: Array/String/Object/Number/Math/Date/Function
+  console.js          console.log/info/warn/error/debug, routed through log()
+  log.js              log() levels + tee to a file; REPLACES the launcher's log()
+  csv.js              csv_parse/csv_format/read_csv_file/write_csv_file
+  win.js              registry, processes (WMI), command execution with captured output
   system.js           stdin/stdout, file system, binary files, HTTP, date formatting
   helpers.js          interactive prompts + Excel / Access / Word COM automation
   crypto.js           sha256, sha256_bytes, hmac_sha256
@@ -151,9 +155,10 @@ update the matching suite and state plainly that the suite was not executed;
 do not claim tests pass. CI (`.github/workflows/tests.yml`) runs on a
 `windows-latest` GitHub Actions runner, which does have `cscript.exe`, and
 invokes `bin\tests\run-tests.bat` directly; it sets `CI=true`, which
-`run-tests.bat` uses to skip the interactive `test-ui.js` suite and the final
-`pause`, and which `test-http.js` uses to switch to its offline stub (see
-below) so the job isn't at the mercy of httpbin.org's uptime.
+`run-tests.bat` uses to skip the final `pause`, `test-http.js` uses to switch
+to its offline stub (so the job isn't at the mercy of httpbin.org's uptime),
+and `test-ui.js` uses to skip the describes that open a window while still
+running its parsing tests.
 
 Suites and what they need:
 
@@ -166,12 +171,16 @@ Suites and what they need:
 | `test-crypto.js` | nothing |
 | `test-base64.js` | nothing |
 | `test-minimist.js` | nothing |
+| `test-console.js` | nothing |
+| `test-csv.js` | temp folder write access (parsing tests need nothing) |
 | `test-system.js` | temp folder write access |
 | `test-filesystem.js` | temp folder write access |
+| `test-log.js` | temp folder write access (level tests use a captured sink) |
 | `test-helpers.js` | temp folder write access (Office parts are skipped) |
+| `test-win.js` | writes under `HKCU\Software\jscriptowork_test`, spawns `cmd.exe`; no admin rights needed |
 | `test-build.js` | spawns `cscript.exe build.js` as a subprocess (regenerates `dist/`) |
-| `test-http.js` | network access to httpbin.org — or set `JSW_TEST_HTTP_OFFLINE=1` (or `CI=true`) to use a local stub instead |
-| `test-ui.js` | interactive desktop; HTA windows flash on screen |
+| `test-http.js` | network access to httpbin.org — or set `JSW_TEST_HTTP_OFFLINE=1` (or `CI=true`) to use a local stub instead. The async/binary tests have no stub and skip themselves offline |
+| `test-ui.js` | interactive desktop for the window tests; they skip themselves when `CI=true` (or `JSW_TEST_NO_DESKTOP` is set), and the progress-parsing tests always run |
 
 ## Build
 

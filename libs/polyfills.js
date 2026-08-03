@@ -432,24 +432,13 @@ if (!Function.prototype.bind) {
 }
 
 // ---------------------------------------------------------------------------
-// console shim  (maps to WScript output)
+// console shim
 // ---------------------------------------------------------------------------
-
-if (typeof console === 'undefined') {
-    console = (function() {
-        function _print(prefix, args) {
-            var parts = [];
-            for (var i = 0; i < args.length; i++) {
-                var v = args[i];
-                parts.push((v !== null && typeof v === 'object') ? JSON.stringify(v) : String(v));
-            }
-            WScript.Echo(prefix + parts.join(' '));
-        }
-        return {
-            log:   function() { _print('',         arguments); },
-            info:  function() { _print('[INFO] ',  arguments); },
-            warn:  function() { _print('[WARN] ',  arguments); },
-            error: function() { _print('[ERROR] ', arguments); }
-        };
-    }());
-}
+//
+// The console shim now lives in its own lib so it can be loaded on its own:
+//
+//     load("console");
+//
+// polyfills.js deliberately no longer defines it - this file is the
+// language-level compatibility layer (Array/String/Object/Number/Math/Date/
+// Function) and nothing else.

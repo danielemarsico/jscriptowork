@@ -6,22 +6,11 @@ bug is fixed.
 
 ## Features
 
-- [ ] `libs/console.js` — split the `console` shim out of `polyfills.js` so it
-      can be loaded on its own (original roadmap item).
-- [ ] Async/streaming HTTP: `MSXML2.ServerXMLHTTP`, plus non-text responses.
-      `http_request` already has a `timeout` parameter and exposes response
-      headers to the callback (see CHANGELOG); it is still synchronous
-      (`open(..., false)`) despite the callback-shaped API — a real async
-      rewrite is what remains here.
-- [ ] CSV read/write helpers in `system.js` — currently every caller goes through
-      Excel COM for tabular data.
-- [ ] Logging levels for `log()` (`debug`/`info`/`warn`/`error`) and an option to
-      tee output to a file.
-- [ ] `open_hta`: a way to stream progress back from the HTA to CScript while the
-      window is open (today only the final `jsw_return` value crosses the
-      boundary).
-- [ ] Registry and process helpers (`WScript.Shell` / WMI) — common in the kind
-      of automation this framework targets.
+- [ ] `http_request()` itself is still synchronous (`open(..., false)`), on
+      purpose: its signature and callback shape are what every existing caller
+      and the test suite's offline stub are built on. Real async lives alongside
+      it as `http_request_async()` / `http_wait_all()`. Revisit only if the
+      synchronous entry point becomes the bottleneck.
 
 ## Testing and tooling
 

@@ -32,6 +32,16 @@ cscript.exe %launcher% %mypath%test-minitest.js
 if errorlevel 1 set OVERALL_EXIT=1
 
 echo.
+echo --- console ---
+cscript.exe %launcher% %mypath%test-console.js
+if errorlevel 1 set OVERALL_EXIT=1
+
+echo.
+echo --- csv ---
+cscript.exe %launcher% %mypath%test-csv.js
+if errorlevel 1 set OVERALL_EXIT=1
+
+echo.
 echo --- crypto ---
 cscript.exe %launcher% %mypath%test-crypto.js
 if errorlevel 1 set OVERALL_EXIT=1
@@ -60,8 +70,18 @@ cscript.exe %launcher% %mypath%test-filesystem.js
 if errorlevel 1 set OVERALL_EXIT=1
 
 echo.
+echo --- log (levels captured, file tee on disk) ---
+cscript.exe %launcher% %mypath%test-log.js
+if errorlevel 1 set OVERALL_EXIT=1
+
+echo.
 echo --- helpers (Excel/Access mocked, Office tests skipped) ---
 cscript.exe %launcher% %mypath%test-helpers.js
+if errorlevel 1 set OVERALL_EXIT=1
+
+echo.
+echo --- win (HKCU registry sandbox, cmd.exe subprocesses) ---
+cscript.exe %launcher% %mypath%test-win.js
 if errorlevel 1 set OVERALL_EXIT=1
 
 echo.
@@ -84,15 +104,14 @@ if errorlevel 1 set OVERALL_EXIT=1
 echo.
 echo ============ desktop suite ==========
 
+echo.
 if "%CI%"=="true" (
-    echo.
-    echo --- ui skipped: interactive desktop required, CI=true ---
+    echo --- ui - HEADLESS, CI=true: window tests skipped, parsing tests run ---
 ) else (
-    echo.
     echo --- ui - HTA windows will flash briefly ---
-    cscript.exe %launcher% %mypath%test-ui.js
-    if errorlevel 1 set OVERALL_EXIT=1
 )
+cscript.exe %launcher% %mypath%test-ui.js
+if errorlevel 1 set OVERALL_EXIT=1
 
 echo.
 echo =====================================

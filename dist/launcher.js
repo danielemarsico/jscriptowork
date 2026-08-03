@@ -34,7 +34,7 @@ function load(modulename) {}
 // Source of core + polyfills + system, pre-escaped for inline HTA injection.
 // ui.js checks typeof _jsw_hta_inline_libs to decide whether to use this
 // or fall back to <script src="file:///..."> references.
-var _jsw_hta_inline_libs = '//modding jscript engine\nif (!Array.prototype.indexOf) {\n    \n    Array.prototype.indexOf = function(obj, start) {\n        var j = this.length;\n        var n = start || 0;\n        for (var i = n >= 0 ? n : Math.max(j + n, 0); i < j; i++) {\n            if (this[i] === obj) { return i; }\n        }\n        return -1;\n    }\n\n}\n\nif (!String.prototype.trim) {\n    (function() {\n        // Make sure we trim BOM and NBSP\n        var rtrim = /^[\\s\\uFEFF\\xA0]+|[\\s\\uFEFF\\xA0]+$/g;\n        String.prototype.trim = function() {\n            return this.replace(rtrim, \'\');\n        };\n    })();\n}\n\nif (!String.prototype.startsWith) {\n    String.prototype.startsWith = function(searchString, position){\n      position = position || 0;\n      return this.substr(position, searchString.length) === searchString;\n  };\n}\n\nif (!Array.prototype.filter) {\n  Array.prototype.filter = function(fun/*, thisArg*/) {\n    \'use strict\';\n\n    if (this === void 0 || this === null) {\n      throw new TypeError();\n    }\n\n    var t = Object(this);\n    var len = t.length >>> 0;\n    if (typeof fun !== \'function\') {\n      throw new TypeError();\n    }\n\n    var res = [];\n    var thisArg = arguments.length >= 2 ? arguments[1] : void 0;\n    for (var i = 0; i < len; i++) {\n      if (i in t) {\n        var val = t[i];\n\n        // NOTE: Technically this should Object.defineProperty at\n        //       the next index, as push can be affected by\n        //       properties on Object.prototype and Array.prototype.\n        //       But that method\'s new, and collisions should be\n        //       rare, so use the more-compatible alternative.\n        if (fun.call(thisArg, val, i, t)) {\n          res.push(val);\n        }\n      }\n    }\n\n    return res;\n  };\n}\n\n// Production steps of ECMA-262, Edition 5, 15.4.4.19\n// Reference: http://es5.github.io/#x15.4.4.19\nif (!Array.prototype.map) {\n\n  Array.prototype.map = function(callback, thisArg) {\n\n    var T, A, k;\n\n    if (this == null) {\n      throw new TypeError(\' this is null or not defined\');\n    }\n\n    // 1. Let O be the result of calling ToObject passing the |this| \n    //    value as the argument.\n    var O = Object(this);\n\n    // 2. Let lenValue be the result of calling the Get internal \n    //    method of O with the argument "length".\n    // 3. Let len be ToUint32(lenValue).\n    var len = O.length >>> 0;\n\n    // 4. If IsCallable(callback) is false, throw a TypeError exception.\n    // See: http://es5.github.com/#x9.11\n    if (typeof callback !== \'function\') {\n      throw new TypeError(callback + \' is not a function\');\n    }\n\n    // 5. If thisArg was supplied, let T be thisArg; else let T be undefined.\n    if (arguments.length > 1) {\n      T = thisArg;\n    }\n\n    // 6. Let A be a new array created as if by the expression new Array(len) \n    //    where Array is the standard built-in constructor with that name and \n    //    len is the value of len.\n    A = new Array(len);\n\n    // 7. Let k be 0\n    k = 0;\n\n    // 8. Repeat, while k < len\n    while (k < len) {\n\n      var kValue, mappedValue;\n\n      // a. Let Pk be ToString(k).\n      //   This is implicit for LHS operands of the in operator\n      // b. Let kPresent be the result of calling the HasProperty internal \n      //    method of O with argument Pk.\n      //   This step can be combined with c\n      // c. If kPresent is true, then\n      if (k in O) {\n\n        // i. Let kValue be the result of calling the Get internal \n        //    method of O with argument Pk.\n        kValue = O[k];\n\n        // ii. Let mappedValue be the result of calling the Call internal \n        //     method of callback with T as the this value and argument \n        //     list containing kValue, k, and O.\n        mappedValue = callback.call(T, kValue, k, O);\n\n        // iii. Call the DefineOwnProperty internal method of A with arguments\n        // Pk, Property Descriptor\n        // { Value: mappedValue,\n        //   Writable: true,\n        //   Enumerable: true,\n        //   Configurable: true },\n        // and false.\n\n        // In browsers that support Object.defineProperty, use the following:\n        // Object.defineProperty(A, k, {\n        //   value: mappedValue,\n        //   writable: true,\n        //   enumerable: true,\n        //   configurable: true\n        // });\n\n        // For best browser support, use the following:\n        A[k] = mappedValue;\n      }\n      // d. Increase k by 1.\n      k++;\n    }\n\n    // 9. return A\n    return A;\n  };\n}\n\n// Production steps of ECMA-262, Edition 5, 15.4.4.18\n// Reference: http://es5.github.io/#x15.4.4.18\nif (!Array.prototype.forEach) {\n\n  Array.prototype.forEach = function(callback, thisArg) {\n\n    var T, k;\n\n    if (this == null) {\n      throw new TypeError(\' this is null or not defined\');\n    }\n\n    // 1. Let O be the result of calling ToObject passing the |this| value as the argument.\n    var O = Object(this);\n\n    // 2. Let lenValue be the result of calling the Get internal method of O with the argument "length".\n    // 3. Let len be ToUint32(lenValue).\n    var len = O.length >>> 0;\n\n    // 4. If IsCallable(callback) is false, throw a TypeError exception.\n    // See: http://es5.github.com/#x9.11\n    if (typeof callback !== "function") {\n      throw new TypeError(callback + \' is not a function\');\n    }\n\n    // 5. If thisArg was supplied, let T be thisArg; else let T be undefined.\n    if (arguments.length > 1) {\n      T = thisArg;\n    }\n\n    // 6. Let k be 0\n    k = 0;\n\n    // 7. Repeat, while k < len\n    while (k < len) {\n\n      var kValue;\n\n      // a. Let Pk be ToString(k).\n      //   This is implicit for LHS operands of the in operator\n      // b. Let kPresent be the result of calling the HasProperty internal method of O with argument Pk.\n      //   This step can be combined with c\n      // c. If kPresent is true, then\n      if (k in O) {\n\n        // i. Let kValue be the result of calling the Get internal method of O with argument Pk.\n        kValue = O[k];\n\n        // ii. Call the Call internal method of callback with T as the this value and\n        // argument list containing kValue, k, and O.\n        callback.call(T, kValue, k, O);\n      }\n      // d. Increase k by 1.\n      k++;\n    }\n    // 8. return undefined\n  };\n}\n\nif (!Array.prototype.find) {\n  Array.prototype.find = function(predicate) {\n    if (this === null) {\n      throw new TypeError(\'Array.prototype.find called on null or undefined\');\n    }\n    if (typeof predicate !== \'function\') {\n      throw new TypeError(\'predicate must be a function\');\n    }\n    var list = Object(this);\n    var length = list.length >>> 0;\n    var thisArg = arguments[1];\n    var value;\n\n    for (var i = 0; i < length; i++) {\n      value = list[i];\n      if (predicate.call(thisArg, value, i, list)) {\n        return value;\n      }\n    }\n    return undefined;\n  };\n}\n\n// Production steps of ECMA-262, Edition 5, 15.4.4.21\n// Reference: http://es5.github.io/#x15.4.4.21\nif (!Array.prototype.reduce) {\n  Array.prototype.reduce = function(callback /*, initialValue*/) {\n    \'use strict\';\n    if (this == null) {\n      throw new TypeError(\'Array.prototype.reduce called on null or undefined\');\n    }\n    if (typeof callback !== \'function\') {\n      throw new TypeError(callback + \' is not a function\');\n    }\n    var t = Object(this), len = t.length >>> 0, k = 0, value;\n    if (arguments.length == 2) {\n      value = arguments[1];\n    } else {\n      while (k < len && !(k in t)) {\n        k++; \n      }\n      if (k >= len) {\n        throw new TypeError(\'Reduce of empty array with no initial value\');\n      }\n      value = t[k++];\n    }\n    for (; k < len; k++) {\n      if (k in t) {\n        value = callback(value, t[k], k, t);\n      }\n    }\n    return value;\n  };\n}\n\n\n\n\n\n/*\n    http://www.JSON.org/json2.js\n    2010-03-20\n\n    Public Domain.\n\n    NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.\n\n    See http://www.JSON.org/js.html\n\n\n    This code should be minified before deployment.\n    See http://javascript.crockford.com/jsmin.html\n\n    USE YOUR OWN COPY. IT IS EXTREMELY UNWISE TO LOAD CODE FROM SERVERS YOU DO\n    NOT CONTROL.\n\n\n    This file creates a global JSON object containing two methods: stringify\n    and parse.\n\n        JSON.stringify(value, replacer, space)\n            value       any JavaScript value, usually an object or array.\n\n            replacer    an optional parameter that determines how object\n                        values are stringified for objects. It can be a\n                        function or an array of strings.\n\n            space       an optional parameter that specifies the indentation\n                        of nested structures. If it is omitted, the text will\n                        be packed without extra whitespace. If it is a number,\n                        it will specify the number of spaces to indent at each\n                        level. If it is a string (such as \'\\t\' or \'&nbsp;\'),\n                        it contains the characters used to indent at each level.\n\n            This method produces a JSON text from a JavaScript value.\n\n            When an object value is found, if the object contains a toJSON\n            method, its toJSON method will be called and the result will be\n            stringified. A toJSON method does not serialize: it returns the\n            value represented by the name/value pair that should be serialized,\n            or undefined if nothing should be serialized. The toJSON method\n            will be passed the key associated with the value, and this will be\n            bound to the value\n\n            For example, this would serialize Dates as ISO strings.\n\n                Date.prototype.toJSON = function (key) {\n                    function f(n) {\n                        // Format integers to have at least two digits.\n                        return n < 10 ? \'0\' + n : n;\n                    }\n\n                    return this.getUTCFullYear()   + \'-\' +\n                         f(this.getUTCMonth() + 1) + \'-\' +\n                         f(this.getUTCDate())      + \'T\' +\n                         f(this.getUTCHours())     + \':\' +\n                         f(this.getUTCMinutes())   + \':\' +\n                         f(this.getUTCSeconds())   + \'Z\';\n                };\n\n            You can provide an optional replacer method. It will be passed the\n            key and value of each member, with this bound to the containing\n            object. The value that is returned from your method will be\n            serialized. If your method returns undefined, then the member will\n            be excluded from the serialization.\n\n            If the replacer parameter is an array of strings, then it will be\n            used to select the members to be serialized. It filters the results\n            such that only members with keys listed in the replacer array are\n            stringified.\n\n            Values that do not have JSON representations, such as undefined or\n            functions, will not be serialized. Such values in objects will be\n            dropped; in arrays they will be replaced with null. You can use\n            a replacer function to replace those with JSON values.\n            JSON.stringify(undefined) returns undefined.\n\n            The optional space parameter produces a stringification of the\n            value that is filled with line breaks and indentation to make it\n            easier to read.\n\n            If the space parameter is a non-empty string, then that string will\n            be used for indentation. If the space parameter is a number, then\n            the indentation will be that many spaces.\n\n            Example:\n\n            text = JSON.stringify([\'e\', {pluribus: \'unum\'}]);\n            // text is \'["e",{"pluribus":"unum"}]\'\n\n\n            text = JSON.stringify([\'e\', {pluribus: \'unum\'}], null, \'\\t\');\n            // text is \'[\\n\\t"e",\\n\\t{\\n\\t\\t"pluribus": "unum"\\n\\t}\\n]\'\n\n            text = JSON.stringify([new Date()], function (key, value) {\n                return this[key] instanceof Date ?\n                    \'Date(\' + this[key] + \')\' : value;\n            });\n            // text is \'["Date(---current time---)"]\'\n\n\n        JSON.parse(text, reviver)\n            This method parses a JSON text to produce an object or array.\n            It can throw a SyntaxError exception.\n\n            The optional reviver parameter is a function that can filter and\n            transform the results. It receives each of the keys and values,\n            and its return value is used instead of the original value.\n            If it returns what it received, then the structure is not modified.\n            If it returns undefined then the member is deleted.\n\n            Example:\n\n            // Parse the text. Values that look like ISO date strings will\n            // be converted to Date objects.\n\n            myData = JSON.parse(text, function (key, value) {\n                var a;\n                if (typeof value === \'string\') {\n                    a =\n/^(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2}):(\\d{2}(?:\\.\\d*)?)Z$/.exec(value);\n                    if (a) {\n                        return new Date(Date.UTC(+a[1], +a[2] - 1, +a[3], +a[4],\n                            +a[5], +a[6]));\n                    }\n                }\n                return value;\n            });\n\n            myData = JSON.parse(\'["Date(09/09/2001)"]\', function (key, value) {\n                var d;\n                if (typeof value === \'string\' &&\n                        value.slice(0, 5) === \'Date(\' &&\n                        value.slice(-1) === \')\') {\n                    d = new Date(value.slice(5, -1));\n                    if (d) {\n                        return d;\n                    }\n                }\n                return value;\n            });\n\n\n    This is a reference implementation. You are free to copy, modify, or\n    redistribute.\n*/\n\n/*jslint evil: true, strict: false */\n\n/*members "", "\\b", "\\t", "\\n", "\\f", "\\r", "\\"", JSON, "\\\\", apply,\n    call, charCodeAt, getUTCDate, getUTCFullYear, getUTCHours,\n    getUTCMinutes, getUTCMonth, getUTCSeconds, hasOwnProperty, join,\n    lastIndex, length, parse, prototype, push, replace, slice, stringify,\n    test, toJSON, toString, valueOf\n*/\n\n\n// Create a JSON object only if one does not already exist. We create the\n// methods in a closure to avoid creating global variables.\n\nif (!this.JSON) {\n    this.JSON = {};\n}\n\n(function () {\n\n    function f(n) {\n        // Format integers to have at least two digits.\n        return n < 10 ? \'0\' + n : n;\n    }\n\n    if (typeof Date.prototype.toJSON !== \'function\') {\n\n        Date.prototype.toJSON = function (key) {\n\n            return isFinite(this.valueOf()) ?\n                   this.getUTCFullYear()   + \'-\' +\n                 f(this.getUTCMonth() + 1) + \'-\' +\n                 f(this.getUTCDate())      + \'T\' +\n                 f(this.getUTCHours())     + \':\' +\n                 f(this.getUTCMinutes())   + \':\' +\n                 f(this.getUTCSeconds())   + \'Z\' : null;\n        };\n\n        String.prototype.toJSON =\n        Number.prototype.toJSON =\n        Boolean.prototype.toJSON = function (key) {\n            return this.valueOf();\n        };\n    }\n\n    var cx = /[\\u0000\\u00ad\\u0600-\\u0604\\u070f\\u17b4\\u17b5\\u200c-\\u200f\\u2028-\\u202f\\u2060-\\u206f\\ufeff\\ufff0-\\uffff]/g,\n        escapable = /[\\\\\\"\\x00-\\x1f\\x7f-\\x9f\\u00ad\\u0600-\\u0604\\u070f\\u17b4\\u17b5\\u200c-\\u200f\\u2028-\\u202f\\u2060-\\u206f\\ufeff\\ufff0-\\uffff]/g,\n        gap,\n        indent,\n        meta = {    // table of character substitutions\n            \'\\b\': \'\\\\b\',\n            \'\\t\': \'\\\\t\',\n            \'\\n\': \'\\\\n\',\n            \'\\f\': \'\\\\f\',\n            \'\\r\': \'\\\\r\',\n            \'"\' : \'\\\\"\',\n            \'\\\\\': \'\\\\\\\\\'\n        },\n        rep;\n\n\n    function quote(string) {\n\n// If the string contains no control characters, no quote characters, and no\n// backslash characters, then we can safely slap some quotes around it.\n// Otherwise we must also replace the offending characters with safe escape\n// sequences.\n\n        escapable.lastIndex = 0;\n        return escapable.test(string) ?\n            \'"\' + string.replace(escapable, function (a) {\n                var c = meta[a];\n                return typeof c === \'string\' ? c :\n                    \'\\\\u\' + (\'0000\' + a.charCodeAt(0).toString(16)).slice(-4);\n            }) + \'"\' :\n            \'"\' + string + \'"\';\n    }\n\n\n    function str(key, holder) {\n\n// Produce a string from holder[key].\n\n        var i,          // The loop counter.\n            k,          // The member key.\n            v,          // The member value.\n            length,\n            mind = gap,\n            partial,\n            value = holder[key];\n\n// If the value has a toJSON method, call it to obtain a replacement value.\n\n        if (value && typeof value === \'object\' &&\n                typeof value.toJSON === \'function\') {\n            value = value.toJSON(key);\n        }\n\n// If we were called with a replacer function, then call the replacer to\n// obtain a replacement value.\n\n        if (typeof rep === \'function\') {\n            value = rep.call(holder, key, value);\n        }\n\n// What happens next depends on the value\'s type.\n\n        switch (typeof value) {\n        case \'string\':\n            return quote(value);\n\n        case \'number\':\n\n// JSON numbers must be finite. Encode non-finite numbers as null.\n\n            return isFinite(value) ? String(value) : \'null\';\n\n        case \'boolean\':\n        case \'null\':\n\n// If the value is a boolean or null, convert it to a string. Note:\n// typeof null does not produce \'null\'. The case is included here in\n// the remote chance that this gets fixed someday.\n\n            return String(value);\n\n// If the type is \'object\', we might be dealing with an object or an array or\n// null.\n\n        case \'object\':\n\n// Due to a specification blunder in ECMAScript, typeof null is \'object\',\n// so watch out for that case.\n\n            if (!value) {\n                return \'null\';\n            }\n\n// Make an array to hold the partial results of stringifying this object value.\n\n            gap += indent;\n            partial = [];\n\n// Is the value an array?\n\n            if (Object.prototype.toString.apply(value) === \'[object Array]\') {\n\n// The value is an array. Stringify every element. Use null as a placeholder\n// for non-JSON values.\n\n                length = value.length;\n                for (i = 0; i < length; i += 1) {\n                    partial[i] = str(i, value) || \'null\';\n                }\n\n// Join all of the elements together, separated with commas, and wrap them in\n// brackets.\n\n                v = partial.length === 0 ? \'[]\' :\n                    gap ? \'[\\n\' + gap +\n                            partial.join(\',\\n\' + gap) + \'\\n\' +\n                                mind + \']\' :\n                          \'[\' + partial.join(\',\') + \']\';\n                gap = mind;\n                return v;\n            }\n\n// If the replacer is an array, use it to select the members to be stringified.\n\n            if (rep && typeof rep === \'object\') {\n                length = rep.length;\n                for (i = 0; i < length; i += 1) {\n                    k = rep[i];\n                    if (typeof k === \'string\') {\n                        v = str(k, value);\n                        if (v) {\n                            partial.push(quote(k) + (gap ? \': \' : \':\') + v);\n                        }\n                    }\n                }\n            } else {\n\n// Otherwise, iterate through all of the keys in the object.\n\n                for (k in value) {\n                    if (Object.hasOwnProperty.call(value, k)) {\n                        v = str(k, value);\n                        if (v) {\n                            partial.push(quote(k) + (gap ? \': \' : \':\') + v);\n                        }\n                    }\n                }\n            }\n\n// Join all of the member texts together, separated with commas,\n// and wrap them in braces.\n\n            v = partial.length === 0 ? \'{}\' :\n                gap ? \'{\\n\' + gap + partial.join(\',\\n\' + gap) + \'\\n\' +\n                        mind + \'}\' : \'{\' + partial.join(\',\') + \'}\';\n            gap = mind;\n            return v;\n        }\n        return v;\n    }\n\n// If the JSON object does not yet have a stringify method, give it one.\n\n    if (typeof JSON.stringify !== \'function\') {\n        JSON.stringify = function (value, replacer, space) {\n\n// The stringify method takes a value and an optional replacer, and an optional\n// space parameter, and returns a JSON text. The replacer can be a function\n// that can replace values, or an array of strings that will select the keys.\n// A default replacer method can be provided. Use of the space parameter can\n// produce text that is more easily readable.\n\n            var i;\n            gap = \'\';\n            indent = \'\';\n\n// If the space parameter is a number, make an indent string containing that\n// many spaces.\n\n            if (typeof space === \'number\') {\n                for (i = 0; i < space; i += 1) {\n                    indent += \' \';\n                }\n\n// If the space parameter is a string, it will be used as the indent string.\n\n            } else if (typeof space === \'string\') {\n                indent = space;\n            }\n\n// If there is a replacer, it must be a function or an array.\n// Otherwise, throw an error.\n\n            rep = replacer;\n            if (replacer && typeof replacer !== \'function\' &&\n                    (typeof replacer !== \'object\' ||\n                     typeof replacer.length !== \'number\')) {\n                throw new Error(\'JSON.stringify\');\n            }\n\n// Make a fake root object containing our value under the key of \'\'.\n// Return the result of stringifying the value.\n\n            return str(\'\', {\'\': value});\n        };\n    }\n\n\n// If the JSON object does not yet have a parse method, give it one.\n\n    if (typeof JSON.parse !== \'function\') {\n        JSON.parse = function (text, reviver) {\n\n// The parse method takes a text and an optional reviver function, and returns\n// a JavaScript value if the text is a valid JSON text.\n\n            var j;\n\n            function walk(holder, key) {\n\n// The walk method is used to recursively walk the resulting structure so\n// that modifications can be made.\n\n                var k, v, value = holder[key];\n                if (value && typeof value === \'object\') {\n                    for (k in value) {\n                        if (Object.hasOwnProperty.call(value, k)) {\n                            v = walk(value, k);\n                            if (v !== undefined) {\n                                value[k] = v;\n                            } else {\n                                delete value[k];\n                            }\n                        }\n                    }\n                }\n                return reviver.call(holder, key, value);\n            }\n\n\n// Parsing happens in four stages. In the first stage, we replace certain\n// Unicode characters with escape sequences. JavaScript handles many characters\n// incorrectly, either silently deleting them, or treating them as line endings.\n\n            text = String(text);\n            cx.lastIndex = 0;\n            if (cx.test(text)) {\n                text = text.replace(cx, function (a) {\n                    return \'\\\\u\' +\n                        (\'0000\' + a.charCodeAt(0).toString(16)).slice(-4);\n                });\n            }\n\n// In the second stage, we run the text against regular expressions that look\n// for non-JSON patterns. We are especially concerned with \'()\' and \'new\'\n// because they can cause invocation, and \'=\' because it can cause mutation.\n// But just to be safe, we want to reject all unexpected forms.\n\n// We split the second stage into 4 regexp operations in order to work around\n// crippling inefficiencies in IE\'s and Safari\'s regexp engines. First we\n// replace the JSON backslash pairs with \'@\' (a non-JSON character). Second, we\n// replace all simple value tokens with \']\' characters. Third, we delete all\n// open brackets that follow a colon or comma or that begin the text. Finally,\n// we look to see that the remaining characters are only whitespace or \']\' or\n// \',\' or \':\' or \'{\' or \'}\'. If that is so, then the text is safe for eval.\n\n            if (/^[\\],:{}\\s]*$/.\ntest(text.replace(/\\\\(?:["\\\\\\/bfnrt]|u[0-9a-fA-F]{4})/g, \'@\').\nreplace(/"[^"\\\\\\n\\r]*"|true|false|null|-?\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d+)?/g, \']\').\nreplace(/(?:^|:|,)(?:\\s*\\[)+/g, \'\'))) {\n\n// In the third stage we use the eval function to compile the text into a\n// JavaScript structure. The \'{\' operator is subject to a syntactic ambiguity\n// in JavaScript: it can begin a block or an object literal. We wrap the text\n// in parens to eliminate the ambiguity.\n\n                j = eval(\'(\' + text + \')\');\n\n// In the optional fourth stage, we recursively walk the new structure, passing\n// each name/value pair to a reviver function for possible transformation.\n\n                return typeof reviver === \'function\' ?\n                    walk({\'\': j}, \'\') : j;\n            }\n\n// If the text is not JSON parseable, then a SyntaxError is thrown.\n\n            throw new SyntaxError(\'JSON.parse\');\n        };\n    }\n}());\n\n\n// polyfills.js - Extended ECMAScript compatibility layer for JScript / CScript\n// All code is written in ES3-compatible syntax (no arrow functions, let/const,\n// template literals, destructuring, spread, classes, for..of, Promises).\n\n// ---------------------------------------------------------------------------\n// Array - static methods\n// ---------------------------------------------------------------------------\n\nif (!Array.isArray) {\n    Array.isArray = function(arg) {\n        return Object.prototype.toString.call(arg) === \'[object Array]\';\n    };\n}\n\nif (!Array.of) {\n    Array.of = function() {\n        return Array.prototype.slice.call(arguments);\n    };\n}\n\nif (!Array.from) {\n    Array.from = function(arrayLike, mapFn, thisArg) {\n        if (arrayLike == null) {\n            throw new TypeError(\'Array.from requires an array-like object\');\n        }\n        var arr = [];\n        var len = arrayLike.length >>> 0;\n        for (var i = 0; i < len; i++) {\n            var val = typeof arrayLike === \'string\'\n                ? arrayLike.charAt(i)\n                : arrayLike[i];\n            arr.push(mapFn ? mapFn.call(thisArg, val, i) : val);\n        }\n        return arr;\n    };\n}\n\n// ---------------------------------------------------------------------------\n// Array - prototype methods\n// ---------------------------------------------------------------------------\n\nif (!Array.prototype.every) {\n    Array.prototype.every = function(callback, thisArg) {\n        if (this == null) throw new TypeError(\'Array.prototype.every called on null or undefined\');\n        if (typeof callback !== \'function\') throw new TypeError(callback + \' is not a function\');\n        var O = Object(this);\n        var len = O.length >>> 0;\n        for (var i = 0; i < len; i++) {\n            if (i in O && !callback.call(thisArg, O[i], i, O)) return false;\n        }\n        return true;\n    };\n}\n\nif (!Array.prototype.some) {\n    Array.prototype.some = function(callback, thisArg) {\n        if (this == null) throw new TypeError(\'Array.prototype.some called on null or undefined\');\n        if (typeof callback !== \'function\') throw new TypeError(callback + \' is not a function\');\n        var O = Object(this);\n        var len = O.length >>> 0;\n        for (var i = 0; i < len; i++) {\n            if (i in O && callback.call(thisArg, O[i], i, O)) return true;\n        }\n        return false;\n    };\n}\n\nif (!Array.prototype.includes) {\n    // Uses SameValueZero: NaN equals NaN, unlike indexOf\n    Array.prototype.includes = function(searchElement, fromIndex) {\n        var O = Object(this);\n        var len = O.length >>> 0;\n        if (len === 0) return false;\n        var n = fromIndex | 0;\n        var k = n >= 0 ? n : Math.max(0, len + n);\n        for (; k < len; k++) {\n            var el = O[k];\n            if (el === searchElement || (el !== el && searchElement !== searchElement)) {\n                return true;\n            }\n        }\n        return false;\n    };\n}\n\nif (!Array.prototype.findIndex) {\n    Array.prototype.findIndex = function(predicate, thisArg) {\n        if (this == null) throw new TypeError(\'Array.prototype.findIndex called on null or undefined\');\n        if (typeof predicate !== \'function\') throw new TypeError(\'predicate must be a function\');\n        var O = Object(this);\n        var len = O.length >>> 0;\n        for (var i = 0; i < len; i++) {\n            if (predicate.call(thisArg, O[i], i, O)) return i;\n        }\n        return -1;\n    };\n}\n\nif (!Array.prototype.fill) {\n    Array.prototype.fill = function(value, start, end) {\n        var O = Object(this);\n        var len = O.length >>> 0;\n        var relStart = start === undefined ? 0 : (start | 0);\n        var k = relStart < 0 ? Math.max(len + relStart, 0) : Math.min(relStart, len);\n        var relEnd = end === undefined ? len : (end | 0);\n        var last = relEnd < 0 ? Math.max(len + relEnd, 0) : Math.min(relEnd, len);\n        while (k < last) {\n            O[k] = value;\n            k++;\n        }\n        return O;\n    };\n}\n\nif (!Array.prototype.flat) {\n    Array.prototype.flat = function(depth) {\n        depth = depth === undefined ? 1 : Math.floor(+depth);\n        var result = [];\n        var arr = this;\n        (function flatten(a, d) {\n            for (var i = 0; i < a.length; i++) {\n                if (Array.isArray(a[i]) && d > 0) {\n                    flatten(a[i], d - 1);\n                } else {\n                    result.push(a[i]);\n                }\n            }\n        }(arr, depth));\n        return result;\n    };\n}\n\nif (!Array.prototype.flatMap) {\n    Array.prototype.flatMap = function(callback, thisArg) {\n        return this.map(callback, thisArg).flat(1);\n    };\n}\n\n// ---------------------------------------------------------------------------\n// String - prototype methods\n// ---------------------------------------------------------------------------\n\nif (!String.prototype.endsWith) {\n    String.prototype.endsWith = function(searchString, endPosition) {\n        var str = String(this);\n        var pos = endPosition === undefined ? str.length : Math.min(endPosition | 0, str.length);\n        return str.slice(pos - searchString.length, pos) === searchString;\n    };\n}\n\nif (!String.prototype.includes) {\n    String.prototype.includes = function(searchString, position) {\n        return String(this).indexOf(searchString, position || 0) !== -1;\n    };\n}\n\nif (!String.prototype.repeat) {\n    String.prototype.repeat = function(count) {\n        if (this == null) throw new TypeError(\'String.prototype.repeat called on null or undefined\');\n        var str = String(this);\n        count = Math.floor(count);\n        if (count < 0 || count === Infinity) throw new RangeError(\'Invalid count value\');\n        var result = \'\';\n        for (var i = 0; i < count; i++) result += str;\n        return result;\n    };\n}\n\nif (!String.prototype.padStart) {\n    String.prototype.padStart = function(targetLength, padString) {\n        var str = String(this);\n        targetLength = targetLength >> 0;\n        padString = padString === undefined ? \' \' : String(padString);\n        if (str.length >= targetLength || padString.length === 0) return str;\n        var padLength = targetLength - str.length;\n        var pad = padString;\n        while (pad.length < padLength) pad += padString;\n        return pad.slice(0, padLength) + str;\n    };\n}\n\nif (!String.prototype.padEnd) {\n    String.prototype.padEnd = function(targetLength, padString) {\n        var str = String(this);\n        targetLength = targetLength >> 0;\n        padString = padString === undefined ? \' \' : String(padString);\n        if (str.length >= targetLength || padString.length === 0) return str;\n        var padLength = targetLength - str.length;\n        var pad = padString;\n        while (pad.length < padLength) pad += padString;\n        return str + pad.slice(0, padLength);\n    };\n}\n\nif (!String.prototype.trimStart) {\n    String.prototype.trimStart = function() {\n        return String(this).replace(/^[\\s\\uFEFF\\xA0]+/, \'\');\n    };\n    String.prototype.trimLeft = String.prototype.trimStart;\n}\n\nif (!String.prototype.trimEnd) {\n    String.prototype.trimEnd = function() {\n        return String(this).replace(/[\\s\\uFEFF\\xA0]+$/, \'\');\n    };\n    String.prototype.trimRight = String.prototype.trimEnd;\n}\n\n// ---------------------------------------------------------------------------\n// Object - static methods\n// ---------------------------------------------------------------------------\n\nif (!Object.keys) {\n    Object.keys = function(obj) {\n        if (typeof obj !== \'object\' && typeof obj !== \'function\' || obj === null) {\n            throw new TypeError(\'Object.keys called on non-object\');\n        }\n        var keys = [];\n        for (var k in obj) {\n            if (Object.prototype.hasOwnProperty.call(obj, k)) keys.push(k);\n        }\n        return keys;\n    };\n}\n\nif (!Object.values) {\n    Object.values = function(obj) {\n        var keys = Object.keys(obj);\n        var vals = [];\n        for (var i = 0; i < keys.length; i++) vals.push(obj[keys[i]]);\n        return vals;\n    };\n}\n\nif (!Object.entries) {\n    Object.entries = function(obj) {\n        var keys = Object.keys(obj);\n        var entries = [];\n        for (var i = 0; i < keys.length; i++) entries.push([keys[i], obj[keys[i]]]);\n        return entries;\n    };\n}\n\nif (!Object.assign) {\n    Object.assign = function(target) {\n        if (target == null) throw new TypeError(\'Cannot convert undefined or null to object\');\n        var to = Object(target);\n        for (var i = 1; i < arguments.length; i++) {\n            var src = arguments[i];\n            if (src == null) continue;\n            for (var k in src) {\n                if (Object.prototype.hasOwnProperty.call(src, k)) to[k] = src[k];\n            }\n        }\n        return to;\n    };\n}\n\nif (!Object.create) {\n    Object.create = function(proto) {\n        if (proto === null) throw new Error(\'Object.create: null prototype not supported in this polyfill\');\n        function F() {}\n        F.prototype = proto;\n        return new F();\n    };\n}\n\nif (!Object.freeze) {\n    // No-op: JScript cannot truly freeze objects\n    Object.freeze = function(obj) { return obj; };\n}\n\nif (!Object.isFrozen) {\n    Object.isFrozen = function(obj) {\n        return typeof obj !== \'object\' || obj === null;\n    };\n}\n\n// ---------------------------------------------------------------------------\n// Number - static methods and constants\n// ---------------------------------------------------------------------------\n\nif (Number.isNaN === undefined) {\n    Number.isNaN = function(value) {\n        return typeof value === \'number\' && value !== value;\n    };\n}\n\nif (Number.isFinite === undefined) {\n    Number.isFinite = function(value) {\n        return typeof value === \'number\' && isFinite(value);\n    };\n}\n\nif (Number.isInteger === undefined) {\n    Number.isInteger = function(value) {\n        return typeof value === \'number\' && isFinite(value) && Math.floor(value) === value;\n    };\n}\n\nif (Number.parseInt === undefined) {\n    Number.parseInt = parseInt;\n}\n\nif (Number.parseFloat === undefined) {\n    Number.parseFloat = parseFloat;\n}\n\nif (Number.EPSILON === undefined) {\n    Number.EPSILON = 2.220446049250313e-16;\n}\n\nif (Number.MAX_SAFE_INTEGER === undefined) {\n    Number.MAX_SAFE_INTEGER = 9007199254740991;\n}\n\nif (Number.MIN_SAFE_INTEGER === undefined) {\n    Number.MIN_SAFE_INTEGER = -9007199254740991;\n}\n\n// ---------------------------------------------------------------------------\n// Math - static methods\n// ---------------------------------------------------------------------------\n\nif (!Math.sign) {\n    Math.sign = function(x) {\n        x = +x;\n        if (x === 0 || x !== x) return x; // handles +0, -0, NaN\n        return x > 0 ? 1 : -1;\n    };\n}\n\nif (!Math.trunc) {\n    Math.trunc = function(x) {\n        return x < 0 ? Math.ceil(x) : Math.floor(x);\n    };\n}\n\nif (!Math.log2) {\n    Math.log2 = function(x) {\n        return Math.log(x) / Math.LN2;\n    };\n}\n\nif (!Math.log10) {\n    Math.log10 = function(x) {\n        return Math.log(x) / Math.LN10;\n    };\n}\n\nif (!Math.cbrt) {\n    Math.cbrt = function(x) {\n        var y = Math.pow(Math.abs(x), 1 / 3);\n        return x < 0 ? -y : y;\n    };\n}\n\nif (!Math.hypot) {\n    Math.hypot = function() {\n        var sum = 0;\n        for (var i = 0; i < arguments.length; i++) {\n            sum += arguments[i] * arguments[i];\n        }\n        return Math.sqrt(sum);\n    };\n}\n\nif (!Math.clz32) {\n    Math.clz32 = function(x) {\n        x = x >>> 0;\n        if (x === 0) return 32;\n        var n = 0;\n        if ((x & 0xFFFF0000) === 0) { n += 16; x <<= 16; }\n        if ((x & 0xFF000000) === 0) { n += 8;  x <<= 8;  }\n        if ((x & 0xF0000000) === 0) { n += 4;  x <<= 4;  }\n        if ((x & 0xC0000000) === 0) { n += 2;  x <<= 2;  }\n        if ((x & 0x80000000) === 0) { n += 1;            }\n        return n;\n    };\n}\n\n// ---------------------------------------------------------------------------\n// Date - static methods\n// ---------------------------------------------------------------------------\n\nif (!Date.now) {\n    Date.now = function() {\n        return new Date().getTime();\n    };\n}\n\nif (!Date.prototype.toISOString) {\n    Date.prototype.toISOString = function() {\n        if (!isFinite(this)) throw new RangeError(\'Invalid time value\');\n        function pad(n, w) {\n            var s = String(n);\n            while (s.length < (w || 2)) s = \'0\' + s;\n            return s;\n        }\n        return this.getUTCFullYear()        + \'-\' +\n               pad(this.getUTCMonth() + 1)  + \'-\' +\n               pad(this.getUTCDate())        + \'T\' +\n               pad(this.getUTCHours())       + \':\' +\n               pad(this.getUTCMinutes())     + \':\' +\n               pad(this.getUTCSeconds())     + \'.\' +\n               pad(this.getUTCMilliseconds(), 3) + \'Z\';\n    };\n}\n\n// ---------------------------------------------------------------------------\n// Function - prototype methods\n// ---------------------------------------------------------------------------\n\nif (!Function.prototype.bind) {\n    Function.prototype.bind = function(oThis) {\n        if (typeof this !== \'function\') {\n            throw new TypeError(\'Function.prototype.bind: target is not callable\');\n        }\n        var aArgs    = Array.prototype.slice.call(arguments, 1);\n        var fToBind  = this;\n        var fNOP     = function() {};\n        var fBound   = function() {\n            return fToBind.apply(\n                (this instanceof fNOP && oThis) ? this : oThis,\n                aArgs.concat(Array.prototype.slice.call(arguments))\n            );\n        };\n        fNOP.prototype = this.prototype;\n        fBound.prototype = new fNOP();\n        return fBound;\n    };\n}\n\n// ---------------------------------------------------------------------------\n// console shim  (maps to WScript output)\n// ---------------------------------------------------------------------------\n\nif (typeof console === \'undefined\') {\n    console = (function() {\n        function _print(prefix, args) {\n            var parts = [];\n            for (var i = 0; i < args.length; i++) {\n                var v = args[i];\n                parts.push((v !== null && typeof v === \'object\') ? JSON.stringify(v) : String(v));\n            }\n            WScript.Echo(prefix + parts.join(\' \'));\n        }\n        return {\n            log:   function() { _print(\'\',         arguments); },\n            info:  function() { _print(\'[INFO] \',  arguments); },\n            warn:  function() { _print(\'[WARN] \',  arguments); },\n            error: function() { _print(\'[ERROR] \', arguments); }\n        };\n    }());\n}\n\nload_working_directory = function (){\n	\n	var path = CURRENT_FOLDER+"/.workspace";\n    var workspace = read_all_text_file(path);\n	if(!workspace){\n\n		var input_folder = typeof INPUT_FOLDER !== "undefined" ? INPUT_FOLDER : "";\n		return CURRENT_FOLDER+input_folder+"\\\\";\n\n	}else{\n		\n		return workspace.trim();\n	}\n	\n}\n\nsave_working_directory = function(working_directory){\n	\n	var path = CURRENT_FOLDER+"/.workspace";\n	\n    var fso = new ActiveXObject("Scripting.FileSystemObject");\n    try{\n		\n		var f = fso.CreateTextFile(path, true);\n		f.WriteLine(working_directory);\n		f.Close();\n	}\n	catch(exc){\n		log(exc.message);\n		return null;\n		\n	}\n	\n	\n	\n}\n\nload_properties = function (properties_file){\n    \n    \n    var path = CURRENT_FOLDER+"/"+properties_file;\n    var lib = read_all_text_file(path);\n    var rows = lib.split("\\n");\n    log("reading configuration...");\n    for(var i= 0;i < rows.length; i++){\n        var row = rows[i].trim();\n        var new_row = "";\n        if(row !== "" && row.charAt(0) !== "#"){\n            var eq = row.indexOf("=");\n            if(eq !== -1){\n                var key   = row.substring(0, eq).trim();\n                var value = row.substring(eq + 1)\n                    .replace(/\\\\/g, "\\\\\\\\")\n                    .replace(/"/g, "\\\\\\"");\n                new_row = key+"=\\""+value+"\\";";\n            }\n        }\n        rows[i] = new_row;\n    }\n    lib=rows.join(\'\\n\');\n    log("configuration loaded.");\n    eval(lib);\n    \n}\n\n\n\n\n\n// Writes text to a file. Pass unicode=true to write UTF-16LE (needed for\n// non-ASCII content); defaults to ASCII for backward compatibility.\nwrite_text_to_file = function (text,filepath,unicode){\n\n    var ForWriting = 2;\n    var TristateUnicode = -1;\n    var fso = new ActiveXObject("Scripting.FileSystemObject");\n    var f = fso.OpenTextFile(filepath, ForWriting, true, unicode ? TristateUnicode : 0);\n    try{\n        f.Write(text);\n    } finally {\n        f.Close();\n    }\n\n}\n\nstdin   = _script.StdIn;\nstdout  = _script.StdOut;\n\n\nread_line = function (){\n    var str= "";\n\n    str += stdin.ReadLine();\n\n    return str;\n\n}\n\nread = function (n){\n    return stdin.Read(n);\n}\n\nread_all = function(){\n    try{\n\n		if (stdin.AtEndOfStream)\n			return ("");\n		else\n			return (stdin.ReadAll());\n\n\n	}\n	catch(exc){\n		log("can\'t read from stdin");\n		return null;\n\n	}\n}\n\nwrite_line = function (data){\n    \n     stdout.WriteLine(data);\n    \n}\n\nwrite = function (data){\n    \n    stdout.Write(data);\n    \n}\n\n// Returns the full paths of every file directly inside path (not folders,\n// despite the name list_folders kept below for backward compatibility).\nlist_files = function (path){\n\n    var files = [];\n    var fso = new ActiveXObject("Scripting.FileSystemObject");\n    var folder = fso.GetFolder(path);\n    var enumerator = new Enumerator(folder.files);\n    for (; !enumerator.atEnd(); enumerator.moveNext()){\n\n        files.push(enumerator.item().path);\n\n    }\n    return files;\n}\n\n// Kept for backward compatibility: despite the name, this lists files (see TODO.md).\nlist_folders = list_files;\n\n// Returns the full paths of every subfolder directly inside path.\nlist_subfolders = function (path){\n\n    var folders = [];\n    var fso = new ActiveXObject("Scripting.FileSystemObject");\n    var folder = fso.GetFolder(path);\n    var enumerator = new Enumerator(folder.subfolders);\n    for (; !enumerator.atEnd(); enumerator.moveNext()){\n\n        folders.push(enumerator.item().path);\n\n    }\n    return folders;\n}\n\n\nrandomString = function(len, charSet) {\n    charSet = charSet || \'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\';\n    var randomString = \'\';\n    for (var i = 0; i < len; i++) {\n    	var randomPoz = Math.floor(Math.random() * charSet.length);\n    	randomString += charSet.substring(randomPoz,randomPoz+1);\n    }\n    return randomString;\n}\n\n\n//format date object, currently supports YYYY/MM/DD, YY/MM/DD, YYYYMMDD\nformat_date = function(d,format){\n\n	var yyyy = ""+d.getFullYear();\n	var mm   = ("0"+(d.getMonth()+1)).slice(-2);\n	var dd   = ("0"+(d.getDate())).slice(-2);\n\n	if(format == \'YYYY/MM/DD\' ){\n\n		return yyyy+"/"+mm+"/"+dd;\n\n	}else if(format == \'YY/MM/DD\' ){\n\n		return yyyy.slice(-2)+"/"+mm+"/"+dd;\n\n	}else if(format == \'YYYYMMDD\' ){\n\n		return yyyy+mm+dd;\n\n	}else{\n		log(\'format not recognized\')\n		return d.toString();\n	}\n\n}\n\nparse_date = function(ds,format){\n\n	var d = new Date();\n\n	if(format == \'DD/MM/YYYY\' ){\n\n		var day   = ds.substring(0,2);\n		var month = ds.substring(3,5);\n		var year  = ds.substring(6,10);\n\n		d.setFullYear(year);\n		d.setMonth(parseInt(month)-1);\n		d.setDate(parseInt(day))\n		return d;\n		//return (""+d.getFullYear())+"/"+("0"+(d.getMonth()+1)).slice(-2)+"/"+("0"+(d.getDate())).slice(-2);\n\n	}else{\n		log(\'format not recognized\')\n		return ds;\n	}\n\n\n\n}\n\n\n// ---------------------------------------------------------------------------\n// File-system helpers\n// ---------------------------------------------------------------------------\n\n// Reads all text from a file. Returns "" for an empty file, throws on error.\nread_text_file = function(path) {\n    var ForReading = 1;\n    var TristateUseDefault = -2; // auto-detects a Unicode BOM; ASCII files are unaffected\n    var fso = new ActiveXObject("Scripting.FileSystemObject");\n    try {\n        var f = fso.OpenTextFile(path, ForReading, false, TristateUseDefault);\n        if (f.AtEndOfStream) { f.Close(); return ""; }\n        var content = f.ReadAll();\n        f.Close();\n        return content;\n    } catch(exc) {\n        throw new Error("read_text_file: " + exc.message);\n    }\n};\n\n// Returns true if a file exists at path.\nfile_exists = function(path) {\n    return (new ActiveXObject("Scripting.FileSystemObject")).FileExists(path);\n};\n\n// Returns true if a folder exists at path.\nfolder_exists = function(path) {\n    return (new ActiveXObject("Scripting.FileSystemObject")).FolderExists(path);\n};\n\n// Deletes a file. Throws if the file does not exist.\ndelete_file = function(path) {\n    (new ActiveXObject("Scripting.FileSystemObject")).DeleteFile(path);\n};\n\n// Creates a single folder. No-op if it already exists.\ncreate_folder = function(path) {\n    var fso = new ActiveXObject("Scripting.FileSystemObject");\n    if (!fso.FolderExists(path)) { fso.CreateFolder(path); }\n};\n\n// Writes an array of integers (0-255) to a binary file using ADODB.Stream.\n// Each integer is stored as one raw byte (iso-8859-1, no BOM).\n// Note: byte values 128-159 may not round-trip on some locales (Windows-1252 overlap).\nwrite_binary_file = function(path, bytes) {\n    var str = "";\n    for (var i = 0; i < bytes.length; i++) {\n        str += String.fromCharCode(bytes[i] & 0xFF);\n    }\n    var stream = new ActiveXObject("ADODB.Stream");\n    stream.Type    = 2;           // adTypeText\n    stream.CharSet = "iso-8859-1";\n    stream.Open();\n    stream.WriteText(str);\n    stream.SaveToFile(path, 2);   // adSaveCreateOverWrite\n    stream.Close();\n};\n\n// Reads a binary file and returns an array of integers (0-255).\nread_binary_file = function(path) {\n    var stream = new ActiveXObject("ADODB.Stream");\n    stream.Type = 1; // adTypeBinary\n    stream.Open();\n    stream.LoadFromFile(path);\n    if (stream.Size === 0) { stream.Close(); return []; }\n    var bytes = new VBArray(stream.Read()).toArray();\n    stream.Close();\n    return bytes;\n};\n\n// ---------------------------------------------------------------------------\n// http_request(url, method, callback [, body [, headers [, timeout]]])\n// callback(responseText, statusCode, responseHeaders)\n// body            - optional string to send as request body (for POST/PUT)\n// headers         - optional plain object of request headers to set\n// timeout         - optional milliseconds; throws if any phase exceeds it\n// responseHeaders - raw header block as returned by getAllResponseHeaders()\n//\n// Still synchronous (open(..., false)) despite the callback-shaped API: true\n// async/streaming HTTP is tracked as a separate feature in TODO.md.\nhttp_request = function(url, method, reqListener, body, headers, timeout){\n	if([\'GET\',\'POST\',\'PUT\',\'DELETE\'].indexOf(method) == -1){\n		throw \'method not recognized:\' + method;\n	}\n	// ServerXMLHTTP, not plain XMLHTTP: XMLHTTP.6.0 does not implement\n	// setTimeouts() at all (it throws "Object doesn\'t support this property\n	// or method"), so a timeout could never actually take effect there.\n	var request = new ActiveXObject("MSXML2.ServerXMLHTTP.6.0");\n	request.open(method, url, false);\n	if (typeof timeout === "number") {\n		request.setTimeouts(timeout, timeout, timeout, timeout);\n	}\n	if (headers) {\n		for (var key in headers) {\n			if (Object.prototype.hasOwnProperty.call(headers, key)) {\n				request.setRequestHeader(key, headers[key]);\n			}\n		}\n	}\n	request.send(body || null);\n	reqListener(request.responseText, request.status, request.getAllResponseHeaders());\n}\n';
+var _jsw_hta_inline_libs = '//modding jscript engine\nif (!Array.prototype.indexOf) {\n    \n    Array.prototype.indexOf = function(obj, start) {\n        var j = this.length;\n        var n = start || 0;\n        for (var i = n >= 0 ? n : Math.max(j + n, 0); i < j; i++) {\n            if (this[i] === obj) { return i; }\n        }\n        return -1;\n    }\n\n}\n\nif (!String.prototype.trim) {\n    (function() {\n        // Make sure we trim BOM and NBSP\n        var rtrim = /^[\\s\\uFEFF\\xA0]+|[\\s\\uFEFF\\xA0]+$/g;\n        String.prototype.trim = function() {\n            return this.replace(rtrim, \'\');\n        };\n    })();\n}\n\nif (!String.prototype.startsWith) {\n    String.prototype.startsWith = function(searchString, position){\n      position = position || 0;\n      return this.substr(position, searchString.length) === searchString;\n  };\n}\n\nif (!Array.prototype.filter) {\n  Array.prototype.filter = function(fun/*, thisArg*/) {\n    \'use strict\';\n\n    if (this === void 0 || this === null) {\n      throw new TypeError();\n    }\n\n    var t = Object(this);\n    var len = t.length >>> 0;\n    if (typeof fun !== \'function\') {\n      throw new TypeError();\n    }\n\n    var res = [];\n    var thisArg = arguments.length >= 2 ? arguments[1] : void 0;\n    for (var i = 0; i < len; i++) {\n      if (i in t) {\n        var val = t[i];\n\n        // NOTE: Technically this should Object.defineProperty at\n        //       the next index, as push can be affected by\n        //       properties on Object.prototype and Array.prototype.\n        //       But that method\'s new, and collisions should be\n        //       rare, so use the more-compatible alternative.\n        if (fun.call(thisArg, val, i, t)) {\n          res.push(val);\n        }\n      }\n    }\n\n    return res;\n  };\n}\n\n// Production steps of ECMA-262, Edition 5, 15.4.4.19\n// Reference: http://es5.github.io/#x15.4.4.19\nif (!Array.prototype.map) {\n\n  Array.prototype.map = function(callback, thisArg) {\n\n    var T, A, k;\n\n    if (this == null) {\n      throw new TypeError(\' this is null or not defined\');\n    }\n\n    // 1. Let O be the result of calling ToObject passing the |this| \n    //    value as the argument.\n    var O = Object(this);\n\n    // 2. Let lenValue be the result of calling the Get internal \n    //    method of O with the argument "length".\n    // 3. Let len be ToUint32(lenValue).\n    var len = O.length >>> 0;\n\n    // 4. If IsCallable(callback) is false, throw a TypeError exception.\n    // See: http://es5.github.com/#x9.11\n    if (typeof callback !== \'function\') {\n      throw new TypeError(callback + \' is not a function\');\n    }\n\n    // 5. If thisArg was supplied, let T be thisArg; else let T be undefined.\n    if (arguments.length > 1) {\n      T = thisArg;\n    }\n\n    // 6. Let A be a new array created as if by the expression new Array(len) \n    //    where Array is the standard built-in constructor with that name and \n    //    len is the value of len.\n    A = new Array(len);\n\n    // 7. Let k be 0\n    k = 0;\n\n    // 8. Repeat, while k < len\n    while (k < len) {\n\n      var kValue, mappedValue;\n\n      // a. Let Pk be ToString(k).\n      //   This is implicit for LHS operands of the in operator\n      // b. Let kPresent be the result of calling the HasProperty internal \n      //    method of O with argument Pk.\n      //   This step can be combined with c\n      // c. If kPresent is true, then\n      if (k in O) {\n\n        // i. Let kValue be the result of calling the Get internal \n        //    method of O with argument Pk.\n        kValue = O[k];\n\n        // ii. Let mappedValue be the result of calling the Call internal \n        //     method of callback with T as the this value and argument \n        //     list containing kValue, k, and O.\n        mappedValue = callback.call(T, kValue, k, O);\n\n        // iii. Call the DefineOwnProperty internal method of A with arguments\n        // Pk, Property Descriptor\n        // { Value: mappedValue,\n        //   Writable: true,\n        //   Enumerable: true,\n        //   Configurable: true },\n        // and false.\n\n        // In browsers that support Object.defineProperty, use the following:\n        // Object.defineProperty(A, k, {\n        //   value: mappedValue,\n        //   writable: true,\n        //   enumerable: true,\n        //   configurable: true\n        // });\n\n        // For best browser support, use the following:\n        A[k] = mappedValue;\n      }\n      // d. Increase k by 1.\n      k++;\n    }\n\n    // 9. return A\n    return A;\n  };\n}\n\n// Production steps of ECMA-262, Edition 5, 15.4.4.18\n// Reference: http://es5.github.io/#x15.4.4.18\nif (!Array.prototype.forEach) {\n\n  Array.prototype.forEach = function(callback, thisArg) {\n\n    var T, k;\n\n    if (this == null) {\n      throw new TypeError(\' this is null or not defined\');\n    }\n\n    // 1. Let O be the result of calling ToObject passing the |this| value as the argument.\n    var O = Object(this);\n\n    // 2. Let lenValue be the result of calling the Get internal method of O with the argument "length".\n    // 3. Let len be ToUint32(lenValue).\n    var len = O.length >>> 0;\n\n    // 4. If IsCallable(callback) is false, throw a TypeError exception.\n    // See: http://es5.github.com/#x9.11\n    if (typeof callback !== "function") {\n      throw new TypeError(callback + \' is not a function\');\n    }\n\n    // 5. If thisArg was supplied, let T be thisArg; else let T be undefined.\n    if (arguments.length > 1) {\n      T = thisArg;\n    }\n\n    // 6. Let k be 0\n    k = 0;\n\n    // 7. Repeat, while k < len\n    while (k < len) {\n\n      var kValue;\n\n      // a. Let Pk be ToString(k).\n      //   This is implicit for LHS operands of the in operator\n      // b. Let kPresent be the result of calling the HasProperty internal method of O with argument Pk.\n      //   This step can be combined with c\n      // c. If kPresent is true, then\n      if (k in O) {\n\n        // i. Let kValue be the result of calling the Get internal method of O with argument Pk.\n        kValue = O[k];\n\n        // ii. Call the Call internal method of callback with T as the this value and\n        // argument list containing kValue, k, and O.\n        callback.call(T, kValue, k, O);\n      }\n      // d. Increase k by 1.\n      k++;\n    }\n    // 8. return undefined\n  };\n}\n\nif (!Array.prototype.find) {\n  Array.prototype.find = function(predicate) {\n    if (this === null) {\n      throw new TypeError(\'Array.prototype.find called on null or undefined\');\n    }\n    if (typeof predicate !== \'function\') {\n      throw new TypeError(\'predicate must be a function\');\n    }\n    var list = Object(this);\n    var length = list.length >>> 0;\n    var thisArg = arguments[1];\n    var value;\n\n    for (var i = 0; i < length; i++) {\n      value = list[i];\n      if (predicate.call(thisArg, value, i, list)) {\n        return value;\n      }\n    }\n    return undefined;\n  };\n}\n\n// Production steps of ECMA-262, Edition 5, 15.4.4.21\n// Reference: http://es5.github.io/#x15.4.4.21\nif (!Array.prototype.reduce) {\n  Array.prototype.reduce = function(callback /*, initialValue*/) {\n    \'use strict\';\n    if (this == null) {\n      throw new TypeError(\'Array.prototype.reduce called on null or undefined\');\n    }\n    if (typeof callback !== \'function\') {\n      throw new TypeError(callback + \' is not a function\');\n    }\n    var t = Object(this), len = t.length >>> 0, k = 0, value;\n    if (arguments.length == 2) {\n      value = arguments[1];\n    } else {\n      while (k < len && !(k in t)) {\n        k++; \n      }\n      if (k >= len) {\n        throw new TypeError(\'Reduce of empty array with no initial value\');\n      }\n      value = t[k++];\n    }\n    for (; k < len; k++) {\n      if (k in t) {\n        value = callback(value, t[k], k, t);\n      }\n    }\n    return value;\n  };\n}\n\n\n\n\n\n/*\n    http://www.JSON.org/json2.js\n    2010-03-20\n\n    Public Domain.\n\n    NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.\n\n    See http://www.JSON.org/js.html\n\n\n    This code should be minified before deployment.\n    See http://javascript.crockford.com/jsmin.html\n\n    USE YOUR OWN COPY. IT IS EXTREMELY UNWISE TO LOAD CODE FROM SERVERS YOU DO\n    NOT CONTROL.\n\n\n    This file creates a global JSON object containing two methods: stringify\n    and parse.\n\n        JSON.stringify(value, replacer, space)\n            value       any JavaScript value, usually an object or array.\n\n            replacer    an optional parameter that determines how object\n                        values are stringified for objects. It can be a\n                        function or an array of strings.\n\n            space       an optional parameter that specifies the indentation\n                        of nested structures. If it is omitted, the text will\n                        be packed without extra whitespace. If it is a number,\n                        it will specify the number of spaces to indent at each\n                        level. If it is a string (such as \'\\t\' or \'&nbsp;\'),\n                        it contains the characters used to indent at each level.\n\n            This method produces a JSON text from a JavaScript value.\n\n            When an object value is found, if the object contains a toJSON\n            method, its toJSON method will be called and the result will be\n            stringified. A toJSON method does not serialize: it returns the\n            value represented by the name/value pair that should be serialized,\n            or undefined if nothing should be serialized. The toJSON method\n            will be passed the key associated with the value, and this will be\n            bound to the value\n\n            For example, this would serialize Dates as ISO strings.\n\n                Date.prototype.toJSON = function (key) {\n                    function f(n) {\n                        // Format integers to have at least two digits.\n                        return n < 10 ? \'0\' + n : n;\n                    }\n\n                    return this.getUTCFullYear()   + \'-\' +\n                         f(this.getUTCMonth() + 1) + \'-\' +\n                         f(this.getUTCDate())      + \'T\' +\n                         f(this.getUTCHours())     + \':\' +\n                         f(this.getUTCMinutes())   + \':\' +\n                         f(this.getUTCSeconds())   + \'Z\';\n                };\n\n            You can provide an optional replacer method. It will be passed the\n            key and value of each member, with this bound to the containing\n            object. The value that is returned from your method will be\n            serialized. If your method returns undefined, then the member will\n            be excluded from the serialization.\n\n            If the replacer parameter is an array of strings, then it will be\n            used to select the members to be serialized. It filters the results\n            such that only members with keys listed in the replacer array are\n            stringified.\n\n            Values that do not have JSON representations, such as undefined or\n            functions, will not be serialized. Such values in objects will be\n            dropped; in arrays they will be replaced with null. You can use\n            a replacer function to replace those with JSON values.\n            JSON.stringify(undefined) returns undefined.\n\n            The optional space parameter produces a stringification of the\n            value that is filled with line breaks and indentation to make it\n            easier to read.\n\n            If the space parameter is a non-empty string, then that string will\n            be used for indentation. If the space parameter is a number, then\n            the indentation will be that many spaces.\n\n            Example:\n\n            text = JSON.stringify([\'e\', {pluribus: \'unum\'}]);\n            // text is \'["e",{"pluribus":"unum"}]\'\n\n\n            text = JSON.stringify([\'e\', {pluribus: \'unum\'}], null, \'\\t\');\n            // text is \'[\\n\\t"e",\\n\\t{\\n\\t\\t"pluribus": "unum"\\n\\t}\\n]\'\n\n            text = JSON.stringify([new Date()], function (key, value) {\n                return this[key] instanceof Date ?\n                    \'Date(\' + this[key] + \')\' : value;\n            });\n            // text is \'["Date(---current time---)"]\'\n\n\n        JSON.parse(text, reviver)\n            This method parses a JSON text to produce an object or array.\n            It can throw a SyntaxError exception.\n\n            The optional reviver parameter is a function that can filter and\n            transform the results. It receives each of the keys and values,\n            and its return value is used instead of the original value.\n            If it returns what it received, then the structure is not modified.\n            If it returns undefined then the member is deleted.\n\n            Example:\n\n            // Parse the text. Values that look like ISO date strings will\n            // be converted to Date objects.\n\n            myData = JSON.parse(text, function (key, value) {\n                var a;\n                if (typeof value === \'string\') {\n                    a =\n/^(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2}):(\\d{2}(?:\\.\\d*)?)Z$/.exec(value);\n                    if (a) {\n                        return new Date(Date.UTC(+a[1], +a[2] - 1, +a[3], +a[4],\n                            +a[5], +a[6]));\n                    }\n                }\n                return value;\n            });\n\n            myData = JSON.parse(\'["Date(09/09/2001)"]\', function (key, value) {\n                var d;\n                if (typeof value === \'string\' &&\n                        value.slice(0, 5) === \'Date(\' &&\n                        value.slice(-1) === \')\') {\n                    d = new Date(value.slice(5, -1));\n                    if (d) {\n                        return d;\n                    }\n                }\n                return value;\n            });\n\n\n    This is a reference implementation. You are free to copy, modify, or\n    redistribute.\n*/\n\n/*jslint evil: true, strict: false */\n\n/*members "", "\\b", "\\t", "\\n", "\\f", "\\r", "\\"", JSON, "\\\\", apply,\n    call, charCodeAt, getUTCDate, getUTCFullYear, getUTCHours,\n    getUTCMinutes, getUTCMonth, getUTCSeconds, hasOwnProperty, join,\n    lastIndex, length, parse, prototype, push, replace, slice, stringify,\n    test, toJSON, toString, valueOf\n*/\n\n\n// Create a JSON object only if one does not already exist. We create the\n// methods in a closure to avoid creating global variables.\n\nif (!this.JSON) {\n    this.JSON = {};\n}\n\n(function () {\n\n    function f(n) {\n        // Format integers to have at least two digits.\n        return n < 10 ? \'0\' + n : n;\n    }\n\n    if (typeof Date.prototype.toJSON !== \'function\') {\n\n        Date.prototype.toJSON = function (key) {\n\n            return isFinite(this.valueOf()) ?\n                   this.getUTCFullYear()   + \'-\' +\n                 f(this.getUTCMonth() + 1) + \'-\' +\n                 f(this.getUTCDate())      + \'T\' +\n                 f(this.getUTCHours())     + \':\' +\n                 f(this.getUTCMinutes())   + \':\' +\n                 f(this.getUTCSeconds())   + \'Z\' : null;\n        };\n\n        String.prototype.toJSON =\n        Number.prototype.toJSON =\n        Boolean.prototype.toJSON = function (key) {\n            return this.valueOf();\n        };\n    }\n\n    var cx = /[\\u0000\\u00ad\\u0600-\\u0604\\u070f\\u17b4\\u17b5\\u200c-\\u200f\\u2028-\\u202f\\u2060-\\u206f\\ufeff\\ufff0-\\uffff]/g,\n        escapable = /[\\\\\\"\\x00-\\x1f\\x7f-\\x9f\\u00ad\\u0600-\\u0604\\u070f\\u17b4\\u17b5\\u200c-\\u200f\\u2028-\\u202f\\u2060-\\u206f\\ufeff\\ufff0-\\uffff]/g,\n        gap,\n        indent,\n        meta = {    // table of character substitutions\n            \'\\b\': \'\\\\b\',\n            \'\\t\': \'\\\\t\',\n            \'\\n\': \'\\\\n\',\n            \'\\f\': \'\\\\f\',\n            \'\\r\': \'\\\\r\',\n            \'"\' : \'\\\\"\',\n            \'\\\\\': \'\\\\\\\\\'\n        },\n        rep;\n\n\n    function quote(string) {\n\n// If the string contains no control characters, no quote characters, and no\n// backslash characters, then we can safely slap some quotes around it.\n// Otherwise we must also replace the offending characters with safe escape\n// sequences.\n\n        escapable.lastIndex = 0;\n        return escapable.test(string) ?\n            \'"\' + string.replace(escapable, function (a) {\n                var c = meta[a];\n                return typeof c === \'string\' ? c :\n                    \'\\\\u\' + (\'0000\' + a.charCodeAt(0).toString(16)).slice(-4);\n            }) + \'"\' :\n            \'"\' + string + \'"\';\n    }\n\n\n    function str(key, holder) {\n\n// Produce a string from holder[key].\n\n        var i,          // The loop counter.\n            k,          // The member key.\n            v,          // The member value.\n            length,\n            mind = gap,\n            partial,\n            value = holder[key];\n\n// If the value has a toJSON method, call it to obtain a replacement value.\n\n        if (value && typeof value === \'object\' &&\n                typeof value.toJSON === \'function\') {\n            value = value.toJSON(key);\n        }\n\n// If we were called with a replacer function, then call the replacer to\n// obtain a replacement value.\n\n        if (typeof rep === \'function\') {\n            value = rep.call(holder, key, value);\n        }\n\n// What happens next depends on the value\'s type.\n\n        switch (typeof value) {\n        case \'string\':\n            return quote(value);\n\n        case \'number\':\n\n// JSON numbers must be finite. Encode non-finite numbers as null.\n\n            return isFinite(value) ? String(value) : \'null\';\n\n        case \'boolean\':\n        case \'null\':\n\n// If the value is a boolean or null, convert it to a string. Note:\n// typeof null does not produce \'null\'. The case is included here in\n// the remote chance that this gets fixed someday.\n\n            return String(value);\n\n// If the type is \'object\', we might be dealing with an object or an array or\n// null.\n\n        case \'object\':\n\n// Due to a specification blunder in ECMAScript, typeof null is \'object\',\n// so watch out for that case.\n\n            if (!value) {\n                return \'null\';\n            }\n\n// Make an array to hold the partial results of stringifying this object value.\n\n            gap += indent;\n            partial = [];\n\n// Is the value an array?\n\n            if (Object.prototype.toString.apply(value) === \'[object Array]\') {\n\n// The value is an array. Stringify every element. Use null as a placeholder\n// for non-JSON values.\n\n                length = value.length;\n                for (i = 0; i < length; i += 1) {\n                    partial[i] = str(i, value) || \'null\';\n                }\n\n// Join all of the elements together, separated with commas, and wrap them in\n// brackets.\n\n                v = partial.length === 0 ? \'[]\' :\n                    gap ? \'[\\n\' + gap +\n                            partial.join(\',\\n\' + gap) + \'\\n\' +\n                                mind + \']\' :\n                          \'[\' + partial.join(\',\') + \']\';\n                gap = mind;\n                return v;\n            }\n\n// If the replacer is an array, use it to select the members to be stringified.\n\n            if (rep && typeof rep === \'object\') {\n                length = rep.length;\n                for (i = 0; i < length; i += 1) {\n                    k = rep[i];\n                    if (typeof k === \'string\') {\n                        v = str(k, value);\n                        if (v) {\n                            partial.push(quote(k) + (gap ? \': \' : \':\') + v);\n                        }\n                    }\n                }\n            } else {\n\n// Otherwise, iterate through all of the keys in the object.\n\n                for (k in value) {\n                    if (Object.hasOwnProperty.call(value, k)) {\n                        v = str(k, value);\n                        if (v) {\n                            partial.push(quote(k) + (gap ? \': \' : \':\') + v);\n                        }\n                    }\n                }\n            }\n\n// Join all of the member texts together, separated with commas,\n// and wrap them in braces.\n\n            v = partial.length === 0 ? \'{}\' :\n                gap ? \'{\\n\' + gap + partial.join(\',\\n\' + gap) + \'\\n\' +\n                        mind + \'}\' : \'{\' + partial.join(\',\') + \'}\';\n            gap = mind;\n            return v;\n        }\n        return v;\n    }\n\n// If the JSON object does not yet have a stringify method, give it one.\n\n    if (typeof JSON.stringify !== \'function\') {\n        JSON.stringify = function (value, replacer, space) {\n\n// The stringify method takes a value and an optional replacer, and an optional\n// space parameter, and returns a JSON text. The replacer can be a function\n// that can replace values, or an array of strings that will select the keys.\n// A default replacer method can be provided. Use of the space parameter can\n// produce text that is more easily readable.\n\n            var i;\n            gap = \'\';\n            indent = \'\';\n\n// If the space parameter is a number, make an indent string containing that\n// many spaces.\n\n            if (typeof space === \'number\') {\n                for (i = 0; i < space; i += 1) {\n                    indent += \' \';\n                }\n\n// If the space parameter is a string, it will be used as the indent string.\n\n            } else if (typeof space === \'string\') {\n                indent = space;\n            }\n\n// If there is a replacer, it must be a function or an array.\n// Otherwise, throw an error.\n\n            rep = replacer;\n            if (replacer && typeof replacer !== \'function\' &&\n                    (typeof replacer !== \'object\' ||\n                     typeof replacer.length !== \'number\')) {\n                throw new Error(\'JSON.stringify\');\n            }\n\n// Make a fake root object containing our value under the key of \'\'.\n// Return the result of stringifying the value.\n\n            return str(\'\', {\'\': value});\n        };\n    }\n\n\n// If the JSON object does not yet have a parse method, give it one.\n\n    if (typeof JSON.parse !== \'function\') {\n        JSON.parse = function (text, reviver) {\n\n// The parse method takes a text and an optional reviver function, and returns\n// a JavaScript value if the text is a valid JSON text.\n\n            var j;\n\n            function walk(holder, key) {\n\n// The walk method is used to recursively walk the resulting structure so\n// that modifications can be made.\n\n                var k, v, value = holder[key];\n                if (value && typeof value === \'object\') {\n                    for (k in value) {\n                        if (Object.hasOwnProperty.call(value, k)) {\n                            v = walk(value, k);\n                            if (v !== undefined) {\n                                value[k] = v;\n                            } else {\n                                delete value[k];\n                            }\n                        }\n                    }\n                }\n                return reviver.call(holder, key, value);\n            }\n\n\n// Parsing happens in four stages. In the first stage, we replace certain\n// Unicode characters with escape sequences. JavaScript handles many characters\n// incorrectly, either silently deleting them, or treating them as line endings.\n\n            text = String(text);\n            cx.lastIndex = 0;\n            if (cx.test(text)) {\n                text = text.replace(cx, function (a) {\n                    return \'\\\\u\' +\n                        (\'0000\' + a.charCodeAt(0).toString(16)).slice(-4);\n                });\n            }\n\n// In the second stage, we run the text against regular expressions that look\n// for non-JSON patterns. We are especially concerned with \'()\' and \'new\'\n// because they can cause invocation, and \'=\' because it can cause mutation.\n// But just to be safe, we want to reject all unexpected forms.\n\n// We split the second stage into 4 regexp operations in order to work around\n// crippling inefficiencies in IE\'s and Safari\'s regexp engines. First we\n// replace the JSON backslash pairs with \'@\' (a non-JSON character). Second, we\n// replace all simple value tokens with \']\' characters. Third, we delete all\n// open brackets that follow a colon or comma or that begin the text. Finally,\n// we look to see that the remaining characters are only whitespace or \']\' or\n// \',\' or \':\' or \'{\' or \'}\'. If that is so, then the text is safe for eval.\n\n            if (/^[\\],:{}\\s]*$/.\ntest(text.replace(/\\\\(?:["\\\\\\/bfnrt]|u[0-9a-fA-F]{4})/g, \'@\').\nreplace(/"[^"\\\\\\n\\r]*"|true|false|null|-?\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d+)?/g, \']\').\nreplace(/(?:^|:|,)(?:\\s*\\[)+/g, \'\'))) {\n\n// In the third stage we use the eval function to compile the text into a\n// JavaScript structure. The \'{\' operator is subject to a syntactic ambiguity\n// in JavaScript: it can begin a block or an object literal. We wrap the text\n// in parens to eliminate the ambiguity.\n\n                j = eval(\'(\' + text + \')\');\n\n// In the optional fourth stage, we recursively walk the new structure, passing\n// each name/value pair to a reviver function for possible transformation.\n\n                return typeof reviver === \'function\' ?\n                    walk({\'\': j}, \'\') : j;\n            }\n\n// If the text is not JSON parseable, then a SyntaxError is thrown.\n\n            throw new SyntaxError(\'JSON.parse\');\n        };\n    }\n}());\n\n\n// polyfills.js - Extended ECMAScript compatibility layer for JScript / CScript\n// All code is written in ES3-compatible syntax (no arrow functions, let/const,\n// template literals, destructuring, spread, classes, for..of, Promises).\n\n// ---------------------------------------------------------------------------\n// Array - static methods\n// ---------------------------------------------------------------------------\n\nif (!Array.isArray) {\n    Array.isArray = function(arg) {\n        return Object.prototype.toString.call(arg) === \'[object Array]\';\n    };\n}\n\nif (!Array.of) {\n    Array.of = function() {\n        return Array.prototype.slice.call(arguments);\n    };\n}\n\nif (!Array.from) {\n    Array.from = function(arrayLike, mapFn, thisArg) {\n        if (arrayLike == null) {\n            throw new TypeError(\'Array.from requires an array-like object\');\n        }\n        var arr = [];\n        var len = arrayLike.length >>> 0;\n        for (var i = 0; i < len; i++) {\n            var val = typeof arrayLike === \'string\'\n                ? arrayLike.charAt(i)\n                : arrayLike[i];\n            arr.push(mapFn ? mapFn.call(thisArg, val, i) : val);\n        }\n        return arr;\n    };\n}\n\n// ---------------------------------------------------------------------------\n// Array - prototype methods\n// ---------------------------------------------------------------------------\n\nif (!Array.prototype.every) {\n    Array.prototype.every = function(callback, thisArg) {\n        if (this == null) throw new TypeError(\'Array.prototype.every called on null or undefined\');\n        if (typeof callback !== \'function\') throw new TypeError(callback + \' is not a function\');\n        var O = Object(this);\n        var len = O.length >>> 0;\n        for (var i = 0; i < len; i++) {\n            if (i in O && !callback.call(thisArg, O[i], i, O)) return false;\n        }\n        return true;\n    };\n}\n\nif (!Array.prototype.some) {\n    Array.prototype.some = function(callback, thisArg) {\n        if (this == null) throw new TypeError(\'Array.prototype.some called on null or undefined\');\n        if (typeof callback !== \'function\') throw new TypeError(callback + \' is not a function\');\n        var O = Object(this);\n        var len = O.length >>> 0;\n        for (var i = 0; i < len; i++) {\n            if (i in O && callback.call(thisArg, O[i], i, O)) return true;\n        }\n        return false;\n    };\n}\n\nif (!Array.prototype.includes) {\n    // Uses SameValueZero: NaN equals NaN, unlike indexOf\n    Array.prototype.includes = function(searchElement, fromIndex) {\n        var O = Object(this);\n        var len = O.length >>> 0;\n        if (len === 0) return false;\n        var n = fromIndex | 0;\n        var k = n >= 0 ? n : Math.max(0, len + n);\n        for (; k < len; k++) {\n            var el = O[k];\n            if (el === searchElement || (el !== el && searchElement !== searchElement)) {\n                return true;\n            }\n        }\n        return false;\n    };\n}\n\nif (!Array.prototype.findIndex) {\n    Array.prototype.findIndex = function(predicate, thisArg) {\n        if (this == null) throw new TypeError(\'Array.prototype.findIndex called on null or undefined\');\n        if (typeof predicate !== \'function\') throw new TypeError(\'predicate must be a function\');\n        var O = Object(this);\n        var len = O.length >>> 0;\n        for (var i = 0; i < len; i++) {\n            if (predicate.call(thisArg, O[i], i, O)) return i;\n        }\n        return -1;\n    };\n}\n\nif (!Array.prototype.fill) {\n    Array.prototype.fill = function(value, start, end) {\n        var O = Object(this);\n        var len = O.length >>> 0;\n        var relStart = start === undefined ? 0 : (start | 0);\n        var k = relStart < 0 ? Math.max(len + relStart, 0) : Math.min(relStart, len);\n        var relEnd = end === undefined ? len : (end | 0);\n        var last = relEnd < 0 ? Math.max(len + relEnd, 0) : Math.min(relEnd, len);\n        while (k < last) {\n            O[k] = value;\n            k++;\n        }\n        return O;\n    };\n}\n\nif (!Array.prototype.flat) {\n    Array.prototype.flat = function(depth) {\n        depth = depth === undefined ? 1 : Math.floor(+depth);\n        var result = [];\n        var arr = this;\n        (function flatten(a, d) {\n            for (var i = 0; i < a.length; i++) {\n                if (Array.isArray(a[i]) && d > 0) {\n                    flatten(a[i], d - 1);\n                } else {\n                    result.push(a[i]);\n                }\n            }\n        }(arr, depth));\n        return result;\n    };\n}\n\nif (!Array.prototype.flatMap) {\n    Array.prototype.flatMap = function(callback, thisArg) {\n        return this.map(callback, thisArg).flat(1);\n    };\n}\n\n// ---------------------------------------------------------------------------\n// String - prototype methods\n// ---------------------------------------------------------------------------\n\nif (!String.prototype.endsWith) {\n    String.prototype.endsWith = function(searchString, endPosition) {\n        var str = String(this);\n        var pos = endPosition === undefined ? str.length : Math.min(endPosition | 0, str.length);\n        return str.slice(pos - searchString.length, pos) === searchString;\n    };\n}\n\nif (!String.prototype.includes) {\n    String.prototype.includes = function(searchString, position) {\n        return String(this).indexOf(searchString, position || 0) !== -1;\n    };\n}\n\nif (!String.prototype.repeat) {\n    String.prototype.repeat = function(count) {\n        if (this == null) throw new TypeError(\'String.prototype.repeat called on null or undefined\');\n        var str = String(this);\n        count = Math.floor(count);\n        if (count < 0 || count === Infinity) throw new RangeError(\'Invalid count value\');\n        var result = \'\';\n        for (var i = 0; i < count; i++) result += str;\n        return result;\n    };\n}\n\nif (!String.prototype.padStart) {\n    String.prototype.padStart = function(targetLength, padString) {\n        var str = String(this);\n        targetLength = targetLength >> 0;\n        padString = padString === undefined ? \' \' : String(padString);\n        if (str.length >= targetLength || padString.length === 0) return str;\n        var padLength = targetLength - str.length;\n        var pad = padString;\n        while (pad.length < padLength) pad += padString;\n        return pad.slice(0, padLength) + str;\n    };\n}\n\nif (!String.prototype.padEnd) {\n    String.prototype.padEnd = function(targetLength, padString) {\n        var str = String(this);\n        targetLength = targetLength >> 0;\n        padString = padString === undefined ? \' \' : String(padString);\n        if (str.length >= targetLength || padString.length === 0) return str;\n        var padLength = targetLength - str.length;\n        var pad = padString;\n        while (pad.length < padLength) pad += padString;\n        return str + pad.slice(0, padLength);\n    };\n}\n\nif (!String.prototype.trimStart) {\n    String.prototype.trimStart = function() {\n        return String(this).replace(/^[\\s\\uFEFF\\xA0]+/, \'\');\n    };\n    String.prototype.trimLeft = String.prototype.trimStart;\n}\n\nif (!String.prototype.trimEnd) {\n    String.prototype.trimEnd = function() {\n        return String(this).replace(/[\\s\\uFEFF\\xA0]+$/, \'\');\n    };\n    String.prototype.trimRight = String.prototype.trimEnd;\n}\n\n// ---------------------------------------------------------------------------\n// Object - static methods\n// ---------------------------------------------------------------------------\n\nif (!Object.keys) {\n    Object.keys = function(obj) {\n        if (typeof obj !== \'object\' && typeof obj !== \'function\' || obj === null) {\n            throw new TypeError(\'Object.keys called on non-object\');\n        }\n        var keys = [];\n        for (var k in obj) {\n            if (Object.prototype.hasOwnProperty.call(obj, k)) keys.push(k);\n        }\n        return keys;\n    };\n}\n\nif (!Object.values) {\n    Object.values = function(obj) {\n        var keys = Object.keys(obj);\n        var vals = [];\n        for (var i = 0; i < keys.length; i++) vals.push(obj[keys[i]]);\n        return vals;\n    };\n}\n\nif (!Object.entries) {\n    Object.entries = function(obj) {\n        var keys = Object.keys(obj);\n        var entries = [];\n        for (var i = 0; i < keys.length; i++) entries.push([keys[i], obj[keys[i]]]);\n        return entries;\n    };\n}\n\nif (!Object.assign) {\n    Object.assign = function(target) {\n        if (target == null) throw new TypeError(\'Cannot convert undefined or null to object\');\n        var to = Object(target);\n        for (var i = 1; i < arguments.length; i++) {\n            var src = arguments[i];\n            if (src == null) continue;\n            for (var k in src) {\n                if (Object.prototype.hasOwnProperty.call(src, k)) to[k] = src[k];\n            }\n        }\n        return to;\n    };\n}\n\nif (!Object.create) {\n    Object.create = function(proto) {\n        if (proto === null) throw new Error(\'Object.create: null prototype not supported in this polyfill\');\n        function F() {}\n        F.prototype = proto;\n        return new F();\n    };\n}\n\nif (!Object.freeze) {\n    // No-op: JScript cannot truly freeze objects\n    Object.freeze = function(obj) { return obj; };\n}\n\nif (!Object.isFrozen) {\n    Object.isFrozen = function(obj) {\n        return typeof obj !== \'object\' || obj === null;\n    };\n}\n\n// ---------------------------------------------------------------------------\n// Number - static methods and constants\n// ---------------------------------------------------------------------------\n\nif (Number.isNaN === undefined) {\n    Number.isNaN = function(value) {\n        return typeof value === \'number\' && value !== value;\n    };\n}\n\nif (Number.isFinite === undefined) {\n    Number.isFinite = function(value) {\n        return typeof value === \'number\' && isFinite(value);\n    };\n}\n\nif (Number.isInteger === undefined) {\n    Number.isInteger = function(value) {\n        return typeof value === \'number\' && isFinite(value) && Math.floor(value) === value;\n    };\n}\n\nif (Number.parseInt === undefined) {\n    Number.parseInt = parseInt;\n}\n\nif (Number.parseFloat === undefined) {\n    Number.parseFloat = parseFloat;\n}\n\nif (Number.EPSILON === undefined) {\n    Number.EPSILON = 2.220446049250313e-16;\n}\n\nif (Number.MAX_SAFE_INTEGER === undefined) {\n    Number.MAX_SAFE_INTEGER = 9007199254740991;\n}\n\nif (Number.MIN_SAFE_INTEGER === undefined) {\n    Number.MIN_SAFE_INTEGER = -9007199254740991;\n}\n\n// ---------------------------------------------------------------------------\n// Math - static methods\n// ---------------------------------------------------------------------------\n\nif (!Math.sign) {\n    Math.sign = function(x) {\n        x = +x;\n        if (x === 0 || x !== x) return x; // handles +0, -0, NaN\n        return x > 0 ? 1 : -1;\n    };\n}\n\nif (!Math.trunc) {\n    Math.trunc = function(x) {\n        return x < 0 ? Math.ceil(x) : Math.floor(x);\n    };\n}\n\nif (!Math.log2) {\n    Math.log2 = function(x) {\n        return Math.log(x) / Math.LN2;\n    };\n}\n\nif (!Math.log10) {\n    Math.log10 = function(x) {\n        return Math.log(x) / Math.LN10;\n    };\n}\n\nif (!Math.cbrt) {\n    Math.cbrt = function(x) {\n        var y = Math.pow(Math.abs(x), 1 / 3);\n        return x < 0 ? -y : y;\n    };\n}\n\nif (!Math.hypot) {\n    Math.hypot = function() {\n        var sum = 0;\n        for (var i = 0; i < arguments.length; i++) {\n            sum += arguments[i] * arguments[i];\n        }\n        return Math.sqrt(sum);\n    };\n}\n\nif (!Math.clz32) {\n    Math.clz32 = function(x) {\n        x = x >>> 0;\n        if (x === 0) return 32;\n        var n = 0;\n        if ((x & 0xFFFF0000) === 0) { n += 16; x <<= 16; }\n        if ((x & 0xFF000000) === 0) { n += 8;  x <<= 8;  }\n        if ((x & 0xF0000000) === 0) { n += 4;  x <<= 4;  }\n        if ((x & 0xC0000000) === 0) { n += 2;  x <<= 2;  }\n        if ((x & 0x80000000) === 0) { n += 1;            }\n        return n;\n    };\n}\n\n// ---------------------------------------------------------------------------\n// Date - static methods\n// ---------------------------------------------------------------------------\n\nif (!Date.now) {\n    Date.now = function() {\n        return new Date().getTime();\n    };\n}\n\nif (!Date.prototype.toISOString) {\n    Date.prototype.toISOString = function() {\n        if (!isFinite(this)) throw new RangeError(\'Invalid time value\');\n        function pad(n, w) {\n            var s = String(n);\n            while (s.length < (w || 2)) s = \'0\' + s;\n            return s;\n        }\n        return this.getUTCFullYear()        + \'-\' +\n               pad(this.getUTCMonth() + 1)  + \'-\' +\n               pad(this.getUTCDate())        + \'T\' +\n               pad(this.getUTCHours())       + \':\' +\n               pad(this.getUTCMinutes())     + \':\' +\n               pad(this.getUTCSeconds())     + \'.\' +\n               pad(this.getUTCMilliseconds(), 3) + \'Z\';\n    };\n}\n\n// ---------------------------------------------------------------------------\n// Function - prototype methods\n// ---------------------------------------------------------------------------\n\nif (!Function.prototype.bind) {\n    Function.prototype.bind = function(oThis) {\n        if (typeof this !== \'function\') {\n            throw new TypeError(\'Function.prototype.bind: target is not callable\');\n        }\n        var aArgs    = Array.prototype.slice.call(arguments, 1);\n        var fToBind  = this;\n        var fNOP     = function() {};\n        var fBound   = function() {\n            return fToBind.apply(\n                (this instanceof fNOP && oThis) ? this : oThis,\n                aArgs.concat(Array.prototype.slice.call(arguments))\n            );\n        };\n        fNOP.prototype = this.prototype;\n        fBound.prototype = new fNOP();\n        return fBound;\n    };\n}\n\n// ---------------------------------------------------------------------------\n// console shim\n// ---------------------------------------------------------------------------\n//\n// The console shim now lives in its own lib so it can be loaded on its own:\n//\n//     load("console");\n//\n// polyfills.js deliberately no longer defines it - this file is the\n// language-level compatibility layer (Array/String/Object/Number/Math/Date/\n// Function) and nothing else.\n\n// console.js - console shim for JScript / CScript\n//\n// JScript has no console object. This provides the familiar\n// console.log/info/warn/error/debug surface on top of whatever output channel\n// the host offers.\n//\n//   load("console");\n//   console.log("hello", 42, {a: 1});   ->  hello 42 {"a":1}\n//   console.warn("careful");            ->  [WARN] careful\n//\n// Output routing, in order of preference:\n//   1. log()          - defined by bin/launcher.js, dist/launcher.js AND by the\n//                       HTA bootstrap in ui.js, so this is the portable path\n//                       and the one that honours libs/log.js levels and file\n//                       tee-ing when that lib is loaded.\n//   2. WScript.Echo() - plain WSH with no launcher.\n//   3. no-op          - nothing to write to; never throws.\n//\n// This shim used to live in polyfills.js. It was split out so a script can pull\n// in console on its own, and so polyfills.js stays purely a language-level\n// compatibility layer.\n//\n// Objects are rendered with JSON.stringify, so load("core") first if you want\n// anything better than [object Object] on a host without native JSON.\n\nif (typeof console === \'undefined\') {\n    console = (function() {\n\n        function _write(text) {\n            // Resolved per call, not captured once: log() may be redefined\n            // later (libs/log.js does exactly that).\n            if (typeof log === \'function\') {\n                log(text);\n            } else if (typeof WScript !== \'undefined\') {\n                WScript.Echo(text);\n            }\n        }\n\n        function _format(args) {\n            var parts = [];\n            for (var i = 0; i < args.length; i++) {\n                var v = args[i];\n                if (v !== null && typeof v === \'object\' && typeof JSON !== \'undefined\') {\n                    try {\n                        parts.push(JSON.stringify(v));\n                    } catch (e) {\n                        parts.push(String(v));\n                    }\n                } else {\n                    parts.push(String(v));\n                }\n            }\n            return parts.join(\' \');\n        }\n\n        function _print(prefix, args) {\n            _write(prefix + _format(args));\n        }\n\n        return {\n            log:   function() { _print(\'\',         arguments); },\n            info:  function() { _print(\'[INFO] \',  arguments); },\n            warn:  function() { _print(\'[WARN] \',  arguments); },\n            error: function() { _print(\'[ERROR] \', arguments); },\n            debug: function() { _print(\'[DEBUG] \', arguments); }\n        };\n    }());\n}\n\nload_working_directory = function (){\n	\n	var path = CURRENT_FOLDER+"/.workspace";\n    var workspace = read_all_text_file(path);\n	if(!workspace){\n\n		var input_folder = typeof INPUT_FOLDER !== "undefined" ? INPUT_FOLDER : "";\n		return CURRENT_FOLDER+input_folder+"\\\\";\n\n	}else{\n		\n		return workspace.trim();\n	}\n	\n}\n\nsave_working_directory = function(working_directory){\n	\n	var path = CURRENT_FOLDER+"/.workspace";\n	\n    var fso = new ActiveXObject("Scripting.FileSystemObject");\n    try{\n		\n		var f = fso.CreateTextFile(path, true);\n		f.WriteLine(working_directory);\n		f.Close();\n	}\n	catch(exc){\n		log(exc.message);\n		return null;\n		\n	}\n	\n	\n	\n}\n\nload_properties = function (properties_file){\n    \n    \n    var path = CURRENT_FOLDER+"/"+properties_file;\n    var lib = read_all_text_file(path);\n    var rows = lib.split("\\n");\n    log("reading configuration...");\n    for(var i= 0;i < rows.length; i++){\n        var row = rows[i].trim();\n        var new_row = "";\n        if(row !== "" && row.charAt(0) !== "#"){\n            var eq = row.indexOf("=");\n            if(eq !== -1){\n                var key   = row.substring(0, eq).trim();\n                var value = row.substring(eq + 1)\n                    .replace(/\\\\/g, "\\\\\\\\")\n                    .replace(/"/g, "\\\\\\"");\n                new_row = key+"=\\""+value+"\\";";\n            }\n        }\n        rows[i] = new_row;\n    }\n    lib=rows.join(\'\\n\');\n    log("configuration loaded.");\n    eval(lib);\n    \n}\n\n\n\n\n\n// Writes text to a file. Pass unicode=true to write UTF-16LE (needed for\n// non-ASCII content); defaults to ASCII for backward compatibility.\nwrite_text_to_file = function (text,filepath,unicode){\n\n    var ForWriting = 2;\n    var TristateUnicode = -1;\n    var fso = new ActiveXObject("Scripting.FileSystemObject");\n    var f = fso.OpenTextFile(filepath, ForWriting, true, unicode ? TristateUnicode : 0);\n    try{\n        f.Write(text);\n    } finally {\n        f.Close();\n    }\n\n}\n\nstdin   = _script.StdIn;\nstdout  = _script.StdOut;\n\n\nread_line = function (){\n    var str= "";\n\n    str += stdin.ReadLine();\n\n    return str;\n\n}\n\nread = function (n){\n    return stdin.Read(n);\n}\n\nread_all = function(){\n    try{\n\n		if (stdin.AtEndOfStream)\n			return ("");\n		else\n			return (stdin.ReadAll());\n\n\n	}\n	catch(exc){\n		log("can\'t read from stdin");\n		return null;\n\n	}\n}\n\nwrite_line = function (data){\n    \n     stdout.WriteLine(data);\n    \n}\n\nwrite = function (data){\n    \n    stdout.Write(data);\n    \n}\n\n// Returns the full paths of every file directly inside path (not folders,\n// despite the name list_folders kept below for backward compatibility).\nlist_files = function (path){\n\n    var files = [];\n    var fso = new ActiveXObject("Scripting.FileSystemObject");\n    var folder = fso.GetFolder(path);\n    var enumerator = new Enumerator(folder.files);\n    for (; !enumerator.atEnd(); enumerator.moveNext()){\n\n        files.push(enumerator.item().path);\n\n    }\n    return files;\n}\n\n// Kept for backward compatibility: despite the name, this lists files (see TODO.md).\nlist_folders = list_files;\n\n// Returns the full paths of every subfolder directly inside path.\nlist_subfolders = function (path){\n\n    var folders = [];\n    var fso = new ActiveXObject("Scripting.FileSystemObject");\n    var folder = fso.GetFolder(path);\n    var enumerator = new Enumerator(folder.subfolders);\n    for (; !enumerator.atEnd(); enumerator.moveNext()){\n\n        folders.push(enumerator.item().path);\n\n    }\n    return folders;\n}\n\n\nrandomString = function(len, charSet) {\n    charSet = charSet || \'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\';\n    var randomString = \'\';\n    for (var i = 0; i < len; i++) {\n    	var randomPoz = Math.floor(Math.random() * charSet.length);\n    	randomString += charSet.substring(randomPoz,randomPoz+1);\n    }\n    return randomString;\n}\n\n\n//format date object, currently supports YYYY/MM/DD, YY/MM/DD, YYYYMMDD\nformat_date = function(d,format){\n\n	var yyyy = ""+d.getFullYear();\n	var mm   = ("0"+(d.getMonth()+1)).slice(-2);\n	var dd   = ("0"+(d.getDate())).slice(-2);\n\n	if(format == \'YYYY/MM/DD\' ){\n\n		return yyyy+"/"+mm+"/"+dd;\n\n	}else if(format == \'YY/MM/DD\' ){\n\n		return yyyy.slice(-2)+"/"+mm+"/"+dd;\n\n	}else if(format == \'YYYYMMDD\' ){\n\n		return yyyy+mm+dd;\n\n	}else{\n		log(\'format not recognized\')\n		return d.toString();\n	}\n\n}\n\nparse_date = function(ds,format){\n\n	var d = new Date();\n\n	if(format == \'DD/MM/YYYY\' ){\n\n		var day   = ds.substring(0,2);\n		var month = ds.substring(3,5);\n		var year  = ds.substring(6,10);\n\n		d.setFullYear(year);\n		d.setMonth(parseInt(month)-1);\n		d.setDate(parseInt(day))\n		return d;\n		//return (""+d.getFullYear())+"/"+("0"+(d.getMonth()+1)).slice(-2)+"/"+("0"+(d.getDate())).slice(-2);\n\n	}else{\n		log(\'format not recognized\')\n		return ds;\n	}\n\n\n\n}\n\n\n// ---------------------------------------------------------------------------\n// File-system helpers\n// ---------------------------------------------------------------------------\n\n// Reads all text from a file. Returns "" for an empty file, throws on error.\nread_text_file = function(path) {\n    var ForReading = 1;\n    var TristateUseDefault = -2; // auto-detects a Unicode BOM; ASCII files are unaffected\n    var fso = new ActiveXObject("Scripting.FileSystemObject");\n    try {\n        var f = fso.OpenTextFile(path, ForReading, false, TristateUseDefault);\n        if (f.AtEndOfStream) { f.Close(); return ""; }\n        var content = f.ReadAll();\n        f.Close();\n        return content;\n    } catch(exc) {\n        throw new Error("read_text_file: " + exc.message);\n    }\n};\n\n// Returns true if a file exists at path.\nfile_exists = function(path) {\n    return (new ActiveXObject("Scripting.FileSystemObject")).FileExists(path);\n};\n\n// Returns true if a folder exists at path.\nfolder_exists = function(path) {\n    return (new ActiveXObject("Scripting.FileSystemObject")).FolderExists(path);\n};\n\n// Deletes a file. Throws if the file does not exist.\ndelete_file = function(path) {\n    (new ActiveXObject("Scripting.FileSystemObject")).DeleteFile(path);\n};\n\n// Creates a single folder. No-op if it already exists.\ncreate_folder = function(path) {\n    var fso = new ActiveXObject("Scripting.FileSystemObject");\n    if (!fso.FolderExists(path)) { fso.CreateFolder(path); }\n};\n\n// Writes an array of integers (0-255) to a binary file using ADODB.Stream.\n// Each integer is stored as one raw byte (iso-8859-1, no BOM).\n// Note: byte values 128-159 may not round-trip on some locales (Windows-1252 overlap).\nwrite_binary_file = function(path, bytes) {\n    var str = "";\n    for (var i = 0; i < bytes.length; i++) {\n        str += String.fromCharCode(bytes[i] & 0xFF);\n    }\n    var stream = new ActiveXObject("ADODB.Stream");\n    stream.Type    = 2;           // adTypeText\n    stream.CharSet = "iso-8859-1";\n    stream.Open();\n    stream.WriteText(str);\n    stream.SaveToFile(path, 2);   // adSaveCreateOverWrite\n    stream.Close();\n};\n\n// Reads a binary file and returns an array of integers (0-255).\nread_binary_file = function(path) {\n    var stream = new ActiveXObject("ADODB.Stream");\n    stream.Type = 1; // adTypeBinary\n    stream.Open();\n    stream.LoadFromFile(path);\n    if (stream.Size === 0) { stream.Close(); return []; }\n    var bytes = new VBArray(stream.Read()).toArray();\n    stream.Close();\n    return bytes;\n};\n\n// ---------------------------------------------------------------------------\n// http_request(url, method, callback [, body [, headers [, timeout]]])\n// callback(responseText, statusCode, responseHeaders)\n// body            - optional string to send as request body (for POST/PUT)\n// headers         - optional plain object of request headers to set\n// timeout         - optional milliseconds; throws if any phase exceeds it\n// responseHeaders - raw header block as returned by getAllResponseHeaders()\n//\n// Still synchronous (open(..., false)) despite the callback-shaped API: true\n// async/streaming HTTP is tracked as a separate feature in TODO.md.\nhttp_request = function(url, method, reqListener, body, headers, timeout){\n	// Shared with the async/binary helpers below, so the accepted method list\n	// lives in exactly one place.\n	_http_check_method(method);\n	// ServerXMLHTTP, not plain XMLHTTP: XMLHTTP.6.0 does not implement\n	// setTimeouts() at all (it throws "Object doesn\'t support this property\n	// or method"), so a timeout could never actually take effect there.\n	var request = new ActiveXObject("MSXML2.ServerXMLHTTP.6.0");\n	request.open(method, url, false);\n	if (typeof timeout === "number") {\n		request.setTimeouts(timeout, timeout, timeout, timeout);\n	}\n	if (headers) {\n		for (var key in headers) {\n			if (Object.prototype.hasOwnProperty.call(headers, key)) {\n				request.setRequestHeader(key, headers[key]);\n			}\n		}\n	}\n	request.send(body || null);\n	reqListener(request.responseText, request.status, request.getAllResponseHeaders());\n}\n\n// ---------------------------------------------------------------------------\n// sleep(ms)\n// ---------------------------------------------------------------------------\n\n// Blocks for ms milliseconds. There is no setTimeout in WSH; this is the only\n// way to wait. Not available inside an HTA (no WScript object) - there the\n// call is a no-op so shared code does not blow up.\nsleep = function(ms) {\n    if (typeof WScript !== "undefined" && WScript.Sleep) {\n        WScript.Sleep(ms);\n    }\n};\n\n// ---------------------------------------------------------------------------\n// Asynchronous and binary HTTP\n// ---------------------------------------------------------------------------\n//\n// http_request() above is synchronous: it blocks until the response arrives,\n// so N requests cost the sum of their latencies. http_request_async() sends the\n// request and returns immediately, so several can be in flight at once and the\n// total cost is the slowest one rather than the sum.\n//\n//     var a = http_request_async("https://example.com/a", "GET", on_a);\n//     var b = http_request_async("https://example.com/b", "GET", on_b);\n//     http_wait_all([a, b], 30);      // both callbacks fire here\n//\n// Options object (all optional), shared by every function in this section:\n//     body      string request body (POST/PUT)\n//     headers   plain object of request headers\n//     timeout   milliseconds, applied to each phase via setTimeouts()\n//\n// ServerXMLHTTP is used throughout: plain XMLHTTP.6.0 has no setTimeouts() and\n// no waitForResponse(), so neither timeouts nor async would work there.\n\n_http_methods = [\'GET\', \'POST\', \'PUT\', \'DELETE\'];\n\n_http_check_method = function(method) {\n    if (_http_methods.indexOf(method) == -1) {\n        throw \'method not recognized:\' + method;\n    }\n};\n\n// Creates, opens and configures a request. async decides open()\'s third arg.\n_http_open = function(url, method, options, async) {\n    _http_check_method(method);\n    options = options || {};\n    var request = new ActiveXObject("MSXML2.ServerXMLHTTP.6.0");\n    request.open(method, url, !!async);\n    if (typeof options.timeout === "number") {\n        request.setTimeouts(options.timeout, options.timeout, options.timeout, options.timeout);\n    }\n    if (options.headers) {\n        for (var key in options.headers) {\n            if (Object.prototype.hasOwnProperty.call(options.headers, key)) {\n                request.setRequestHeader(key, options.headers[key]);\n            }\n        }\n    }\n    return request;\n};\n\n// responseBody is a COM byte array, not a string. Round-tripping it through an\n// ADODB.Stream is the same path read_binary_file() uses, so the byte values\n// come back the same way here as they do from disk.\n_http_response_bytes = function(request) {\n    var stream = new ActiveXObject("ADODB.Stream");\n    stream.Type = 1;              // adTypeBinary\n    stream.Open();\n    stream.Write(request.responseBody);\n    if (stream.Size === 0) { stream.Close(); return []; }\n    stream.Position = 0;\n    var bytes = new VBArray(stream.Read()).toArray();\n    stream.Close();\n    return bytes;\n};\n\n// Sends a request and returns immediately, without waiting for the response.\n//\n// Returns a handle:\n//     handle.wait([seconds])  block until the response arrives; fires the\n//                             callback exactly once and returns true. Returns\n//                             false if it timed out (call wait() again to keep\n//                             waiting). With no argument, waits indefinitely.\n//     handle.done             true once the callback has fired\n//     handle.status           HTTP status, once done\n//     handle.text             response text, once done\n//     handle.headers          raw response headers, once done\n//     handle.abort()          give up on the request\n//\n// callback(responseText, statusCode, responseHeaders) - the same shape\n// http_request() uses.\nhttp_request_async = function(url, method, callback, options) {\n\n    options = options || {};\n\n    var request = _http_open(url, method, options, true);\n    request.send(options.body || null);\n\n    var handle = {\n        url:     url,\n        method:  method,\n        done:    false,\n        aborted: false,\n        status:  null,\n        text:    null,\n        headers: null\n    };\n\n    handle.wait = function(seconds) {\n        if (handle.done || handle.aborted) { return handle.done; }\n\n        // waitForResponse takes SECONDS (unlike options.timeout, which is\n        // milliseconds, to match setTimeouts). Omitted means wait forever.\n        var arrived = (typeof seconds === "number")\n            ? request.waitForResponse(seconds)\n            : request.waitForResponse();\n\n        if (!arrived) { return false; }\n\n        handle.status  = request.status;\n        handle.text    = request.responseText;\n        handle.headers = request.getAllResponseHeaders();\n        handle.done    = true;\n        if (callback) { callback(handle.text, handle.status, handle.headers); }\n        return true;\n    };\n\n    handle.abort = function() {\n        if (handle.done || handle.aborted) { return; }\n        handle.aborted = true;\n        try { request.abort(); } catch (e) {}\n    };\n\n    return handle;\n};\n\n// Waits for a batch of handles from http_request_async, firing each callback as\n// its response arrives. Returns true only if every handle completed.\n//\n// The requests are already in flight by the time this is called, so waiting on\n// them one after another still overlaps them: total time is the slowest\n// request, not the sum. seconds, when given, is the budget for EACH handle.\nhttp_wait_all = function(handles, seconds) {\n    var all_done = true;\n    for (var i = 0; i < handles.length; i++) {\n        if (!handles[i].wait(seconds)) { all_done = false; }\n    }\n    return all_done;\n};\n\n// Synchronous request whose response is handed to the callback as an array of\n// byte values (0-255) instead of text - for images, archives, anything that is\n// not text. Same convention as read_binary_file/write_binary_file.\n//\n// callback(byteArray, statusCode, responseHeaders)\nhttp_request_bytes = function(url, method, callback, options) {\n    var request = _http_open(url, method, options, false);\n    request.send((options && options.body) || null);\n    callback(_http_response_bytes(request), request.status, request.getAllResponseHeaders());\n};\n\n// Downloads a URL straight to a file, without ever materialising the body as a\n// JScript array - the response is streamed from COM to disk, so this is what to\n// use for anything large.\n//\n// Returns the HTTP status code. Nothing is written unless the status is 2xx, so\n// an error page never lands on disk pretending to be the file that was asked\n// for; check the return value.\nhttp_download_file = function(url, path, options) {\n    options = options || {};\n    var method  = options.method || \'GET\';\n    var request = _http_open(url, method, options, false);\n    request.send(options.body || null);\n\n    if (request.status < 200 || request.status > 299) { return request.status; }\n\n    var stream = new ActiveXObject("ADODB.Stream");\n    stream.Type = 1;                   // adTypeBinary\n    stream.Open();\n    try {\n        stream.Write(request.responseBody);\n        stream.Position = 0;\n        stream.SaveToFile(path, 2);    // adSaveCreateOverWrite\n    } finally {\n        stream.Close();\n    }\n    return request.status;\n};\n\n';
 
 // ---------------------------------------------------------------------------
 // core.js
@@ -1291,27 +1291,293 @@ if (!Function.prototype.bind) {
 }
 
 // ---------------------------------------------------------------------------
-// console shim  (maps to WScript output)
+// console shim
 // ---------------------------------------------------------------------------
+//
+// The console shim now lives in its own lib so it can be loaded on its own:
+//
+//     load("console");
+//
+// polyfills.js deliberately no longer defines it - this file is the
+// language-level compatibility layer (Array/String/Object/Number/Math/Date/
+// Function) and nothing else.
+
+
+// ---------------------------------------------------------------------------
+// console.js
+// ---------------------------------------------------------------------------
+
+// console.js - console shim for JScript / CScript
+//
+// JScript has no console object. This provides the familiar
+// console.log/info/warn/error/debug surface on top of whatever output channel
+// the host offers.
+//
+//   load("console");
+//   console.log("hello", 42, {a: 1});   ->  hello 42 {"a":1}
+//   console.warn("careful");            ->  [WARN] careful
+//
+// Output routing, in order of preference:
+//   1. log()          - defined by bin/launcher.js, dist/launcher.js AND by the
+//                       HTA bootstrap in ui.js, so this is the portable path
+//                       and the one that honours libs/log.js levels and file
+//                       tee-ing when that lib is loaded.
+//   2. WScript.Echo() - plain WSH with no launcher.
+//   3. no-op          - nothing to write to; never throws.
+//
+// This shim used to live in polyfills.js. It was split out so a script can pull
+// in console on its own, and so polyfills.js stays purely a language-level
+// compatibility layer.
+//
+// Objects are rendered with JSON.stringify, so load("core") first if you want
+// anything better than [object Object] on a host without native JSON.
 
 if (typeof console === 'undefined') {
     console = (function() {
-        function _print(prefix, args) {
+
+        function _write(text) {
+            // Resolved per call, not captured once: log() may be redefined
+            // later (libs/log.js does exactly that).
+            if (typeof log === 'function') {
+                log(text);
+            } else if (typeof WScript !== 'undefined') {
+                WScript.Echo(text);
+            }
+        }
+
+        function _format(args) {
             var parts = [];
             for (var i = 0; i < args.length; i++) {
                 var v = args[i];
-                parts.push((v !== null && typeof v === 'object') ? JSON.stringify(v) : String(v));
+                if (v !== null && typeof v === 'object' && typeof JSON !== 'undefined') {
+                    try {
+                        parts.push(JSON.stringify(v));
+                    } catch (e) {
+                        parts.push(String(v));
+                    }
+                } else {
+                    parts.push(String(v));
+                }
             }
-            WScript.Echo(prefix + parts.join(' '));
+            return parts.join(' ');
         }
+
+        function _print(prefix, args) {
+            _write(prefix + _format(args));
+        }
+
         return {
             log:   function() { _print('',         arguments); },
             info:  function() { _print('[INFO] ',  arguments); },
             warn:  function() { _print('[WARN] ',  arguments); },
-            error: function() { _print('[ERROR] ', arguments); }
+            error: function() { _print('[ERROR] ', arguments); },
+            debug: function() { _print('[DEBUG] ', arguments); }
         };
     }());
 }
+
+
+// ---------------------------------------------------------------------------
+// log.js
+// ---------------------------------------------------------------------------
+
+// log.js - logging levels and file tee-ing for JScript / CScript
+//
+//   load("log");
+//
+//   log("still works exactly as before");   // INFO, no prefix
+//   log_debug("noisy detail");              // [DEBUG] noisy detail
+//   log_info("something happened");         // [INFO] something happened
+//   log_warn("something looks wrong");      // [WARN] something looks wrong
+//   log_error("something broke");           // [ERROR] something broke
+//
+//   set_log_level("warn");        // drop everything below WARN
+//   log_to_file("C:\\run.log");   // also append every line to a file
+//   set_log_timestamps(true);     // prefix each line with an ISO-ish stamp
+//
+// Loading this lib REPLACES the global log() defined by the launcher. It stays
+// backward compatible on purpose:
+//   - log("x") writes exactly "x" - no level prefix - as it always did;
+//   - the default level is INFO, so nothing that used to print stops printing.
+// Everything minitest and the existing suites emit goes through log(), so the
+// test output is unchanged unless a caller opts in to a higher level.
+//
+// The original launcher log() is kept as _log_console, and all console output
+// goes through the replaceable _log_sink, which is what makes level filtering
+// testable without a console to inspect.
+
+// ---------------------------------------------------------------------------
+// Levels
+// ---------------------------------------------------------------------------
+
+// Numeric so comparisons are cheap; gaps left for future levels.
+LOG_LEVELS = { debug: 10, info: 20, warn: 30, error: 40, none: 100 };
+
+_log_level      = LOG_LEVELS.info;
+_log_timestamps = false;
+_log_file_path  = null;
+
+// The original launcher log(), captured before it is replaced below. Under
+// bin/launcher.js this is the global function declaration; under
+// dist/launcher.js it is the same function, inlined at the top of the bundle.
+_log_console = (typeof log === 'function') ? log : null;
+
+// Everything that reaches the console goes through here. Tests replace it to
+// capture output; set_log_sink(null) restores the default.
+_log_sink = function(text) {
+    if (_log_console) {
+        _log_console(text);
+    } else if (typeof WScript !== 'undefined') {
+        WScript.Echo(text);
+    }
+};
+
+// ---------------------------------------------------------------------------
+// Private helpers (_log_ prefix, per the load()/eval scoping note in CLAUDE.md)
+// ---------------------------------------------------------------------------
+
+// Accepts a name ("warn", case-insensitive) or a number. Returns null when the
+// value names no known level.
+_log_resolve_level = function(level) {
+    if (typeof level === 'number') { return level; }
+    if (typeof level === 'string') {
+        var key = level.toLowerCase();
+        if (typeof LOG_LEVELS[key] === 'number') { return LOG_LEVELS[key]; }
+    }
+    return null;
+};
+
+// "2026-08-03 15:52:48"
+_log_timestamp = function() {
+    var d = new Date();
+    var p = function(n) { return ('0' + n).slice(-2); };
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) +
+           ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+};
+
+// Renders one call's arguments the way console.js does: objects as JSON, the
+// rest via String(), joined with spaces.
+_log_format_args = function(args) {
+    var parts = [];
+    for (var i = 0; i < args.length; i++) {
+        var v = args[i];
+        if (v !== null && typeof v === 'object' && typeof JSON !== 'undefined') {
+            try {
+                parts.push(JSON.stringify(v));
+            } catch (e) {
+                parts.push(String(v));
+            }
+        } else {
+            parts.push(String(v));
+        }
+    }
+    return parts.join(' ');
+};
+
+// Appends one line to the tee file. A failure here must never take down the
+// caller - losing a log line is better than losing the run - so the write is
+// swallowed and tee-ing is switched off to avoid failing once per line.
+_log_write_file = function(line) {
+    if (!_log_file_path) { return; }
+    var ForAppending = 8;
+    try {
+        var fso = new ActiveXObject("Scripting.FileSystemObject");
+        var f   = fso.OpenTextFile(_log_file_path, ForAppending, true);
+        try {
+            f.WriteLine(line);
+        } finally {
+            f.Close();
+        }
+    } catch (e) {
+        _log_file_path = null;
+    }
+};
+
+// The one path every level function funnels through.
+_log_emit = function(levelValue, prefix, args) {
+    if (levelValue < _log_level) { return; }
+    var line = prefix + _log_format_args(args);
+    if (_log_timestamps) { line = _log_timestamp() + ' ' + line; }
+    _log_sink(line);
+    _log_write_file(line);
+};
+
+// ---------------------------------------------------------------------------
+// Configuration
+// ---------------------------------------------------------------------------
+
+// Sets the minimum level that gets written. Accepts "debug"/"info"/"warn"/
+// "error"/"none" or a number. Throws on an unknown name, rather than silently
+// muting or unmuting the whole run.
+set_log_level = function(level) {
+    var resolved = _log_resolve_level(level);
+    if (resolved === null) {
+        throw new Error("set_log_level: unknown level: " + level);
+    }
+    _log_level = resolved;
+};
+
+// Returns the current level as a number (compare against LOG_LEVELS).
+get_log_level = function() {
+    return _log_level;
+};
+
+// Returns the current level's name, or "" for a numeric level with no name.
+get_log_level_name = function() {
+    for (var name in LOG_LEVELS) {
+        if (Object.prototype.hasOwnProperty.call(LOG_LEVELS, name) &&
+            LOG_LEVELS[name] === _log_level) {
+            return name;
+        }
+    }
+    return "";
+};
+
+// Starts appending every emitted line to path (created if missing).
+// Pass null to stop tee-ing. Returns the path now in use, or null.
+log_to_file = function(path) {
+    _log_file_path = path ? path : null;
+    return _log_file_path;
+};
+
+// Returns the current tee file path, or null.
+get_log_file = function() {
+    return _log_file_path;
+};
+
+// Turns the leading timestamp on each line on or off.
+set_log_timestamps = function(on) {
+    _log_timestamps = !!on;
+};
+
+// Replaces the console sink; pass null to restore the default. Used by tests to
+// capture output, and usable to route logging somewhere else entirely.
+set_log_sink = function(fn) {
+    if (fn) {
+        _log_sink = fn;
+    } else {
+        _log_sink = function(text) {
+            if (_log_console) {
+                _log_console(text);
+            } else if (typeof WScript !== 'undefined') {
+                WScript.Echo(text);
+            }
+        };
+    }
+};
+
+// ---------------------------------------------------------------------------
+// Level functions
+// ---------------------------------------------------------------------------
+
+log_debug = function() { _log_emit(LOG_LEVELS.debug, '[DEBUG] ', arguments); };
+log_info  = function() { _log_emit(LOG_LEVELS.info,  '[INFO] ',  arguments); };
+log_warn  = function() { _log_emit(LOG_LEVELS.warn,  '[WARN] ',  arguments); };
+log_error = function() { _log_emit(LOG_LEVELS.error, '[ERROR] ', arguments); };
+
+// Replaces the launcher's log(). Logs at INFO with no prefix, so existing
+// output is byte-identical until a caller changes the level.
+log = function() { _log_emit(LOG_LEVELS.info, '', arguments); };
 
 
 // ---------------------------------------------------------------------------
@@ -1628,9 +1894,9 @@ read_binary_file = function(path) {
 // Still synchronous (open(..., false)) despite the callback-shaped API: true
 // async/streaming HTTP is tracked as a separate feature in TODO.md.
 http_request = function(url, method, reqListener, body, headers, timeout){
-	if(['GET','POST','PUT','DELETE'].indexOf(method) == -1){
-		throw 'method not recognized:' + method;
-	}
+	// Shared with the async/binary helpers below, so the accepted method list
+	// lives in exactly one place.
+	_http_check_method(method);
 	// ServerXMLHTTP, not plain XMLHTTP: XMLHTTP.6.0 does not implement
 	// setTimeouts() at all (it throws "Object doesn't support this property
 	// or method"), so a timeout could never actually take effect there.
@@ -1649,6 +1915,460 @@ http_request = function(url, method, reqListener, body, headers, timeout){
 	request.send(body || null);
 	reqListener(request.responseText, request.status, request.getAllResponseHeaders());
 }
+
+// ---------------------------------------------------------------------------
+// sleep(ms)
+// ---------------------------------------------------------------------------
+
+// Blocks for ms milliseconds. There is no setTimeout in WSH; this is the only
+// way to wait. Not available inside an HTA (no WScript object) - there the
+// call is a no-op so shared code does not blow up.
+sleep = function(ms) {
+    if (typeof WScript !== "undefined" && WScript.Sleep) {
+        WScript.Sleep(ms);
+    }
+};
+
+// ---------------------------------------------------------------------------
+// Asynchronous and binary HTTP
+// ---------------------------------------------------------------------------
+//
+// http_request() above is synchronous: it blocks until the response arrives,
+// so N requests cost the sum of their latencies. http_request_async() sends the
+// request and returns immediately, so several can be in flight at once and the
+// total cost is the slowest one rather than the sum.
+//
+//     var a = http_request_async("https://example.com/a", "GET", on_a);
+//     var b = http_request_async("https://example.com/b", "GET", on_b);
+//     http_wait_all([a, b], 30);      // both callbacks fire here
+//
+// Options object (all optional), shared by every function in this section:
+//     body      string request body (POST/PUT)
+//     headers   plain object of request headers
+//     timeout   milliseconds, applied to each phase via setTimeouts()
+//
+// ServerXMLHTTP is used throughout: plain XMLHTTP.6.0 has no setTimeouts() and
+// no waitForResponse(), so neither timeouts nor async would work there.
+
+_http_methods = ['GET', 'POST', 'PUT', 'DELETE'];
+
+_http_check_method = function(method) {
+    if (_http_methods.indexOf(method) == -1) {
+        throw 'method not recognized:' + method;
+    }
+};
+
+// Creates, opens and configures a request. async decides open()'s third arg.
+_http_open = function(url, method, options, async) {
+    _http_check_method(method);
+    options = options || {};
+    var request = new ActiveXObject("MSXML2.ServerXMLHTTP.6.0");
+    request.open(method, url, !!async);
+    if (typeof options.timeout === "number") {
+        request.setTimeouts(options.timeout, options.timeout, options.timeout, options.timeout);
+    }
+    if (options.headers) {
+        for (var key in options.headers) {
+            if (Object.prototype.hasOwnProperty.call(options.headers, key)) {
+                request.setRequestHeader(key, options.headers[key]);
+            }
+        }
+    }
+    return request;
+};
+
+// responseBody is a COM byte array, not a string. Round-tripping it through an
+// ADODB.Stream is the same path read_binary_file() uses, so the byte values
+// come back the same way here as they do from disk.
+_http_response_bytes = function(request) {
+    var stream = new ActiveXObject("ADODB.Stream");
+    stream.Type = 1;              // adTypeBinary
+    stream.Open();
+    stream.Write(request.responseBody);
+    if (stream.Size === 0) { stream.Close(); return []; }
+    stream.Position = 0;
+    var bytes = new VBArray(stream.Read()).toArray();
+    stream.Close();
+    return bytes;
+};
+
+// Sends a request and returns immediately, without waiting for the response.
+//
+// Returns a handle:
+//     handle.wait([seconds])  block until the response arrives; fires the
+//                             callback exactly once and returns true. Returns
+//                             false if it timed out (call wait() again to keep
+//                             waiting). With no argument, waits indefinitely.
+//     handle.done             true once the callback has fired
+//     handle.status           HTTP status, once done
+//     handle.text             response text, once done
+//     handle.headers          raw response headers, once done
+//     handle.abort()          give up on the request
+//
+// callback(responseText, statusCode, responseHeaders) - the same shape
+// http_request() uses.
+http_request_async = function(url, method, callback, options) {
+
+    options = options || {};
+
+    var request = _http_open(url, method, options, true);
+    request.send(options.body || null);
+
+    var handle = {
+        url:     url,
+        method:  method,
+        done:    false,
+        aborted: false,
+        status:  null,
+        text:    null,
+        headers: null
+    };
+
+    handle.wait = function(seconds) {
+        if (handle.done || handle.aborted) { return handle.done; }
+
+        // waitForResponse takes SECONDS (unlike options.timeout, which is
+        // milliseconds, to match setTimeouts). Omitted means wait forever.
+        var arrived = (typeof seconds === "number")
+            ? request.waitForResponse(seconds)
+            : request.waitForResponse();
+
+        if (!arrived) { return false; }
+
+        handle.status  = request.status;
+        handle.text    = request.responseText;
+        handle.headers = request.getAllResponseHeaders();
+        handle.done    = true;
+        if (callback) { callback(handle.text, handle.status, handle.headers); }
+        return true;
+    };
+
+    handle.abort = function() {
+        if (handle.done || handle.aborted) { return; }
+        handle.aborted = true;
+        try { request.abort(); } catch (e) {}
+    };
+
+    return handle;
+};
+
+// Waits for a batch of handles from http_request_async, firing each callback as
+// its response arrives. Returns true only if every handle completed.
+//
+// The requests are already in flight by the time this is called, so waiting on
+// them one after another still overlaps them: total time is the slowest
+// request, not the sum. seconds, when given, is the budget for EACH handle.
+http_wait_all = function(handles, seconds) {
+    var all_done = true;
+    for (var i = 0; i < handles.length; i++) {
+        if (!handles[i].wait(seconds)) { all_done = false; }
+    }
+    return all_done;
+};
+
+// Synchronous request whose response is handed to the callback as an array of
+// byte values (0-255) instead of text - for images, archives, anything that is
+// not text. Same convention as read_binary_file/write_binary_file.
+//
+// callback(byteArray, statusCode, responseHeaders)
+http_request_bytes = function(url, method, callback, options) {
+    var request = _http_open(url, method, options, false);
+    request.send((options && options.body) || null);
+    callback(_http_response_bytes(request), request.status, request.getAllResponseHeaders());
+};
+
+// Downloads a URL straight to a file, without ever materialising the body as a
+// JScript array - the response is streamed from COM to disk, so this is what to
+// use for anything large.
+//
+// Returns the HTTP status code. Nothing is written unless the status is 2xx, so
+// an error page never lands on disk pretending to be the file that was asked
+// for; check the return value.
+http_download_file = function(url, path, options) {
+    options = options || {};
+    var method  = options.method || 'GET';
+    var request = _http_open(url, method, options, false);
+    request.send(options.body || null);
+
+    if (request.status < 200 || request.status > 299) { return request.status; }
+
+    var stream = new ActiveXObject("ADODB.Stream");
+    stream.Type = 1;                   // adTypeBinary
+    stream.Open();
+    try {
+        stream.Write(request.responseBody);
+        stream.Position = 0;
+        stream.SaveToFile(path, 2);    // adSaveCreateOverWrite
+    } finally {
+        stream.Close();
+    }
+    return request.status;
+};
+
+
+// ---------------------------------------------------------------------------
+// csv.js
+// ---------------------------------------------------------------------------
+
+// csv.js - CSV reading and writing for JScript / CScript
+//
+//   load("core"); load("system"); load("csv");
+//
+//   csv_parse(text [, options])          -> array of rows (or of objects)
+//   csv_format(rows [, options])         -> CSV string
+//   read_csv_file(path [, options])      -> array of rows (or of objects)
+//   write_csv_file(path, rows [, opts])  -> writes a CSV file
+//
+// Until now every caller that wanted tabular data went through Excel COM
+// (do_in_excel + read_sheet_data), which means Excel has to be installed and a
+// COM server has to start just to read a few thousand rows. These helpers need
+// nothing but the file system.
+//
+// Follows RFC 4180: fields containing the delimiter, a double quote, CR or LF
+// are wrapped in double quotes, and a literal double quote inside a quoted
+// field is written as two double quotes.
+//
+// Options (all optional):
+//   delimiter    single character field separator.        default ","
+//   headers      parse: true  -> return objects keyed by the first row.
+//                format: true -> derive a header row from the first object's
+//                        keys; an array -> use exactly those keys, in order.
+//                                                          default false
+//   trim         trim whitespace around every parsed field. default false
+//   eol          format only: line terminator.             default "\r\n"
+//   quote_all    format only: quote every field.           default false
+//   unicode      write_csv_file only: write UTF-16.         default false
+//
+// Parsing notes:
+//   - Accepts CRLF, LF or CR line endings, mixed within one file.
+//   - A UTF-8 BOM at the start of the text is stripped.
+//   - A trailing newline does not produce a final empty row, but a blank line
+//     in the middle of the file does produce a one-empty-field row - that is a
+//     real record in CSV, not a formatting artefact.
+//   - Every value is a string; no number or date coercion is attempted.
+
+// ---------------------------------------------------------------------------
+// Private helpers (_csv_ prefix, per the load()/eval scoping note in CLAUDE.md)
+// ---------------------------------------------------------------------------
+
+_csv_option = function(options, name, fallback) {
+    if (!options) { return fallback; }
+    return (typeof options[name] === 'undefined') ? fallback : options[name];
+};
+
+// Quotes one field if it needs quoting (or if quote_all was requested).
+_csv_quote_field = function(value, delimiter, quote_all) {
+    var s = (value === null || typeof value === 'undefined') ? '' : String(value);
+    var needs = quote_all ||
+                s.indexOf(delimiter) !== -1 ||
+                s.indexOf('"')       !== -1 ||
+                s.indexOf('\n')      !== -1 ||
+                s.indexOf('\r')      !== -1;
+    if (!needs) { return s; }
+    return '"' + s.replace(/"/g, '""') + '"';
+};
+
+// Collects the key order for an array of objects: the first object's keys,
+// then any key later objects introduce, so no column is silently dropped.
+_csv_derive_headers = function(rows) {
+    var keys = [];
+    var seen = {};
+    for (var i = 0; i < rows.length; i++) {
+        var row = rows[i];
+        for (var k in row) {
+            if (Object.prototype.hasOwnProperty.call(row, k) && !seen[k]) {
+                seen[k] = true;
+                keys.push(k);
+            }
+        }
+    }
+    return keys;
+};
+
+// ---------------------------------------------------------------------------
+// csv_parse(text [, options])
+// ---------------------------------------------------------------------------
+
+// Returns an array of arrays of strings, or - with options.headers - an array
+// of objects keyed by the first row. Returns [] for empty input.
+csv_parse = function(text, options) {
+
+    var delimiter = _csv_option(options, 'delimiter', ',');
+    var headers   = _csv_option(options, 'headers',   false);
+    var trim      = _csv_option(options, 'trim',      false);
+
+    if (text === null || typeof text === 'undefined') { return []; }
+    text = String(text);
+
+    // Strip a leading BOM. Two shapes reach us: U+FEFF when the file was
+    // decoded as Unicode, and the raw EF BB BF bytes when a UTF-8 file was
+    // read as ASCII. Written as escapes so this file stays pure ASCII.
+    if (text.charAt(0) === '\uFEFF') {
+        text = text.substring(1);
+    } else if (text.substring(0, 3) === '\u00EF\u00BB\u00BF') {
+        text = text.substring(3);
+    }
+
+    if (text.length === 0) { return []; }
+
+    var rows     = [];
+    var row      = [];
+    var field    = '';
+    var inQuotes = false;
+    var quoted   = false;   // this field had quotes: never trim it
+    var i        = 0;
+
+    // Ends the current field. trim applies only to unquoted fields - quoting is
+    // how a CSV author says "this whitespace is data".
+    // Declared as a var expression, not a function declaration: see the note at
+    // the top of libs/crypto.js about JScript's eval() and inner functions.
+    var push_field = function() {
+        row.push((trim && !quoted) ? field.trim() : field);
+        field  = '';
+        quoted = false;
+    };
+
+    // Character-at-a-time scan: a regex split cannot see whether a delimiter or
+    // newline is inside a quoted field. Uses charAt(), never str[i], which
+    // JScript does not support.
+    while (i < text.length) {
+        var c = text.charAt(i);
+
+        if (inQuotes) {
+            if (c === '"') {
+                if (text.charAt(i + 1) === '"') {   // escaped quote
+                    field += '"';
+                    i += 2;
+                    continue;
+                }
+                inQuotes = false;
+                i++;
+                continue;
+            }
+            field += c;
+            i++;
+            continue;
+        }
+
+        if (c === '"') {
+            inQuotes = true;
+            quoted   = true;
+            i++;
+            continue;
+        }
+
+        if (c === delimiter) {
+            push_field();
+            i++;
+            continue;
+        }
+
+        if (c === '\r' || c === '\n') {
+            push_field();
+            rows.push(row);
+            row = [];
+            // CRLF counts as one terminator.
+            if (c === '\r' && text.charAt(i + 1) === '\n') { i += 2; } else { i++; }
+            continue;
+        }
+
+        field += c;
+        i++;
+    }
+
+    // Whatever is left after the last terminator is the final row - unless the
+    // text ended exactly on a terminator, in which case there is nothing left.
+    if (field.length > 0 || row.length > 0 || quoted) {
+        push_field();
+        rows.push(row);
+    }
+
+    if (!headers) { return rows; }
+
+    if (rows.length === 0) { return []; }
+
+    var keys    = rows[0];
+    var records = [];
+    for (var r = 1; r < rows.length; r++) {
+        var record = {};
+        for (var c2 = 0; c2 < keys.length; c2++) {
+            // Short rows yield "" rather than undefined, so every record has
+            // the same shape whatever the file looks like.
+            record[keys[c2]] = (c2 < rows[r].length) ? rows[r][c2] : '';
+        }
+        records.push(record);
+    }
+    return records;
+};
+
+// ---------------------------------------------------------------------------
+// csv_format(rows [, options])
+// ---------------------------------------------------------------------------
+
+// rows may be an array of arrays or an array of objects (use options.headers
+// to control the column order for objects). Returns a string with a trailing
+// end-of-line, or "" for an empty input array.
+csv_format = function(rows, options) {
+
+    var delimiter = _csv_option(options, 'delimiter', ',');
+    // null means "not specified": an array of objects then gets a header row
+    // derived from its keys. Pass headers:false to suppress it outright.
+    var headers   = _csv_option(options, 'headers',   null);
+    var eol       = _csv_option(options, 'eol',       '\r\n');
+    var quote_all = _csv_option(options, 'quote_all', false);
+
+    if (!rows || rows.length === 0) { return ''; }
+
+    var lines = [];
+    var keys  = null;
+
+    // Array of objects: work out the columns, and emit a header row unless the
+    // caller explicitly passed headers:false.
+    if (!Array.isArray(rows[0])) {
+        keys = Array.isArray(headers) ? headers : _csv_derive_headers(rows);
+        if (headers !== false) {
+            var head = [];
+            for (var h = 0; h < keys.length; h++) {
+                head.push(_csv_quote_field(keys[h], delimiter, quote_all));
+            }
+            lines.push(head.join(delimiter));
+        }
+    }
+
+    for (var i = 0; i < rows.length; i++) {
+        var row  = rows[i];
+        var cells = [];
+        if (keys) {
+            for (var k = 0; k < keys.length; k++) {
+                cells.push(_csv_quote_field(row[keys[k]], delimiter, quote_all));
+            }
+        } else {
+            for (var c = 0; c < row.length; c++) {
+                cells.push(_csv_quote_field(row[c], delimiter, quote_all));
+            }
+        }
+        lines.push(cells.join(delimiter));
+    }
+
+    return lines.join(eol) + eol;
+};
+
+// ---------------------------------------------------------------------------
+// File helpers
+// ---------------------------------------------------------------------------
+
+// Reads a CSV file and parses it. Same options as csv_parse.
+// Encoding is handled by read_text_file, which auto-detects a Unicode BOM.
+read_csv_file = function(path, options) {
+    return csv_parse(read_text_file(path), options);
+};
+
+// Formats rows and writes them to a file. Same options as csv_format, plus
+// `unicode` to write UTF-16 instead of ASCII.
+write_csv_file = function(path, rows, options) {
+    write_text_to_file(csv_format(rows, options), path, _csv_option(options, 'unicode', false));
+};
+
 
 // ---------------------------------------------------------------------------
 // helpers.js
@@ -2507,15 +3227,41 @@ function isNumber (x) {
 //   script  string   Extra JS injected after libs.    default: ""
 //   style   string   Extra CSS injected in <head>.    default: ""
 //
-// onClose(result) — optional callback.
+// onClose(result) - optional callback.
 //   When provided CScript BLOCKS until the HTA window closes, then calls
 //   onClose with whatever value the HTA passed to jsw_return(value).
 //   Returns null if the user closed the window without calling jsw_return.
+//
+// options.onProgress(value) - optional callback.
+//   Receives whatever the HTA passes to jsw_progress(value), WHILE the window
+//   is still open, instead of having to wait for the window to close.
+//
+//   Progress changes how the window is launched. Without it, CScript blocks
+//   inside shell.Run() and cannot do anything until mshta exits. With it, the
+//   window is started detached and CScript polls a temp file the HTA appends
+//   to, dispatching each new value as it appears. onClose, if given, still
+//   fires once at the end with the jsw_return value.
+//
+//   options.poll_ms    how often to check for new progress.  default: 200
+//   options.max_wait   give up after this many ms (0 = wait
+//                      forever, which is the default).       default: 0
+//
+//     open_hta({
+//         body:   '<h1>Working...</h1><div id="_jsw_log"></div>',
+//         script: 'window.onload = function() {' +
+//                 '  for (var i = 1; i <= 3; i++) { jsw_progress(i); }' +
+//                 '  jsw_return("finished");' +
+//                 '};',
+//         onProgress: function(v) { log("progress: " + v); }
+//     }, function(result) { log("done: " + result); });
 //
 // ---------------------------------------------------------------------------
 // Inside the HTA the following globals are pre-wired:
 //
 //   jsw_return(value)           write result JSON and close window
+//   jsw_progress(value)         send a value back to CScript right now,
+//                               without closing the window (requires
+//                               options.onProgress on the CScript side)
 //   http_request(...)           from system.js
 //   write_text_to_file(...)     from system.js
 //   read_text_file(...)         from system.js
@@ -2525,6 +3271,49 @@ function isNumber (x) {
 //   Array / String / Object / Number / Math polyfills (core + polyfills)
 //   log(msg)                    appends a line to #_jsw_log (if present)
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Progress polling (private; bare assignments so they survive load()'s eval)
+// ---------------------------------------------------------------------------
+
+// Reads the complete lines written so far. Returns null when the file cannot be
+// read this instant - the HTA may be mid-write - so the caller can simply try
+// again on the next tick rather than losing its place.
+_hta_read_progress = function(path) {
+    if (!file_exists(path)) { return []; }
+    var text;
+    try {
+        text = read_text_file(path);
+    } catch (e) {
+        return null;
+    }
+    // Everything before the last newline is complete; anything after it is a
+    // line still being written, so it waits for the next poll.
+    var parts = text.split("\n");
+    var lines = [];
+    for (var i = 0; i < parts.length - 1; i++) {
+        var line = parts[i];
+        if (line.charAt(line.length - 1) === "\r") { line = line.substring(0, line.length - 1); }
+        if (line.length > 0) { lines.push(line); }
+    }
+    return lines;
+};
+
+// Dispatches every line past `dispatched` and returns the new count.
+_hta_dispatch_progress = function(path, dispatched, onProgress) {
+    var lines = _hta_read_progress(path);
+    if (lines === null) { return dispatched; }
+    for (var i = dispatched; i < lines.length; i++) {
+        var value;
+        try {
+            value = JSON.parse(lines[i]);
+        } catch (e) {
+            value = lines[i];   // not JSON: hand over the raw line
+        }
+        onProgress(value);
+    }
+    return lines.length;
+};
 
 open_hta = function(options, onClose) {
 
@@ -2539,12 +3328,18 @@ open_hta = function(options, onClose) {
     var style  = options.style  || '';
     var script = options.script || '';
 
+    var onProgress = options.onProgress || null;
+    var pollMs     = options.poll_ms  || 200;
+    var maxWaitMs  = options.max_wait || 0;    // 0 = wait for as long as it takes
+
     // ---- temp file paths ----
     var fso        = new ActiveXObject("Scripting.FileSystemObject");
     var tmpDir     = fso.GetSpecialFolder(2).Path;
     var ts         = (new Date()).getTime();
-    var htaPath    = tmpDir + "\\jsw_hta_"    + ts + ".hta";
-    var resultPath = tmpDir + "\\jsw_result_" + ts + ".json";
+    var htaPath      = tmpDir + "\\jsw_hta_"      + ts + ".hta";
+    var resultPath   = tmpDir + "\\jsw_result_"   + ts + ".json";
+    var progressPath = tmpDir + "\\jsw_progress_" + ts + ".txt";
+    var donePath     = tmpDir + "\\jsw_done_"     + ts + ".txt";
 
     // ---- lib URLs (file:/// with forward slashes) ----
     var libBase = "file:///" + ROOT_FOLDER.replace(/\\/g, '/').replace(/\/+$/, '') + "/libs/";
@@ -2601,6 +3396,7 @@ open_hta = function(options, onClose) {
             ? '<script type="text/javascript">\n' + _jsw_hta_inline_libs + '\n</script>'
             : '<script type="text/javascript" src="' + libBase + 'core.js"></script>\n' +
               '<script type="text/javascript" src="' + libBase + 'polyfills.js"></script>\n' +
+              '<script type="text/javascript" src="' + libBase + 'console.js"></script>\n' +
               '<script type="text/javascript" src="' + libBase + 'system.js"></script>'),
 
         // 3. Built-in result channel + window sizing
@@ -2616,6 +3412,29 @@ open_hta = function(options, onClose) {
         '  } catch(e) {}',
         '  window.close();',
         '}',
+        // jsw_progress: append one JSON line to the progress file. Opened and
+        // closed per call so the CScript side can read it between writes.
+        'var _jsw_progress_path = "' + jsStr(progressPath) + '";',
+        'var _jsw_done_path = "' + jsStr(donePath) + '";',
+        'function jsw_progress(value) {',
+        '  try {',
+        '    var fso = new ActiveXObject("Scripting.FileSystemObject");',
+        '    var f = fso.OpenTextFile(_jsw_progress_path, 8, true);',
+        '    f.WriteLine(JSON.stringify(value !== undefined ? value : null));',
+        '    f.Close();',
+        '  } catch(e) {}',
+        '}',
+        // Written however the window goes away - jsw_return, the close box, or
+        // alt+F4 - so the poller always learns the window is gone. onunload,
+        // not onload: a user script setting window.onload would clobber it.
+        'window.onunload = function() {',
+        '  try {',
+        '    var fso = new ActiveXObject("Scripting.FileSystemObject");',
+        '    var f = fso.CreateTextFile(_jsw_done_path, true);',
+        '    f.Write("1");',
+        '    f.Close();',
+        '  } catch(e) {}',
+        '};',
         // size and centre the window once the DOM is ready
         'window.onload = function() {',
         '  window.resizeTo(' + width + ', ' + height + ');',
@@ -2638,11 +3457,10 @@ open_hta = function(options, onClose) {
     write_text_to_file(hta, htaPath);
 
     var shell = new ActiveXObject("WScript.Shell");
-    var wait  = !!onClose;
-    shell.Run('mshta.exe "' + htaPath + '"', 1 /*SW_SHOWNORMAL*/, wait);
 
-    if (onClose) {
-        // mshta has exited — read result then clean up
+    // Reads the jsw_return value (null when the window was closed without one)
+    // and removes every temp file this call created.
+    var collect = function() {
         var result = null;
         if (file_exists(resultPath)) {
             try {
@@ -2650,10 +3468,293 @@ open_hta = function(options, onClose) {
                 delete_file(resultPath);
             } catch(e) {}
         }
-        try { if (file_exists(htaPath)) delete_file(htaPath); } catch(e) {}
-        onClose(result);
+        try { if (file_exists(htaPath))      delete_file(htaPath);      } catch(e) {}
+        try { if (file_exists(progressPath)) delete_file(progressPath); } catch(e) {}
+        try { if (file_exists(donePath))     delete_file(donePath);     } catch(e) {}
+        return result;
+    };
+
+    // ---- streaming mode ----
+    // shell.Run(wait=true) would park CScript inside mshta until the window
+    // closed, which is exactly what progress reporting cannot afford. Launch
+    // detached instead and poll the progress file until the HTA says it is
+    // gone. This blocks until the window closes either way - the difference is
+    // that here CScript gets to run code while it waits.
+    if (onProgress) {
+        shell.Run('mshta.exe "' + htaPath + '"', 1 /*SW_SHOWNORMAL*/, false);
+
+        var dispatched = 0;
+        var waited     = 0;
+        while (true) {
+            dispatched = _hta_dispatch_progress(progressPath, dispatched, onProgress);
+
+            if (file_exists(donePath)) {
+                // One last sweep: a value could have landed between the read
+                // above and the window going away.
+                _hta_dispatch_progress(progressPath, dispatched, onProgress);
+                break;
+            }
+            if (maxWaitMs > 0 && waited >= maxWaitMs) { break; }
+
+            sleep(pollMs);
+            waited += pollMs;
+        }
+
+        var streamed = collect();
+        if (onClose) { onClose(streamed); }
+        return;
+    }
+
+    // ---- blocking / fire-and-forget mode (unchanged) ----
+    shell.Run('mshta.exe "' + htaPath + '"', 1 /*SW_SHOWNORMAL*/, !!onClose);
+
+    if (onClose) {
+        // mshta has exited - read result then clean up
+        onClose(collect());
     }
     // non-blocking: temp files cleaned up by OS eventually
+};
+
+
+// ---------------------------------------------------------------------------
+// win.js
+// ---------------------------------------------------------------------------
+
+// win.js - Windows registry and process helpers for JScript / CScript
+//
+//   load("core"); load("system"); load("win");
+//
+// Registry (WScript.Shell):
+//   reg_read(key [, fallback])        read a value
+//   reg_write(key, value [, type])    write a value
+//   reg_delete(key)                   delete a value or an empty key
+//   reg_exists(key)                   true when the value/key can be read
+//
+// Processes:
+//   run_command(command [, options])  run something, get its exit code
+//   exec_command(command [, opts])    run something, capture stdout/stderr
+//   list_processes([filter])          running processes via WMI
+//   process_exists(name)              true when a process by that name runs
+//   kill_process(name_or_pid)         terminate matching processes
+//
+// Environment:
+//   env(name)                         one process environment variable
+//   expand_env(text)                  expand %VARS% in a string
+//
+// Registry key syntax is WScript.Shell's: a key path ending in a backslash
+// addresses the key's default value, anything else addresses a named value.
+//
+//     reg_read("HKCU\\Software\\MyApp\\Setting")
+//     reg_write("HKCU\\Software\\MyApp\\Count", 3, "REG_DWORD")
+//
+// Roots may be written as HKCU/HKLM/HKCR/HKU/HKCC or spelled out
+// (HKEY_CURRENT_USER and friends).
+//
+// Depends on libs/system.js for read_text_file / file_exists / delete_file.
+
+// ---------------------------------------------------------------------------
+// Private helpers (_win_ prefix, per the load()/eval scoping note in CLAUDE.md)
+// ---------------------------------------------------------------------------
+
+_win_shell = function() {
+    return new ActiveXObject("WScript.Shell");
+};
+
+// Connects to WMI on the local machine. Kept in one place so a future
+// remote-machine option only has to change here.
+_win_wmi = function() {
+    return GetObject("winmgmts:\\\\.\\root\\cimv2");
+};
+
+// Case-insensitive compare that also lets "notepad" match "notepad.exe", so
+// callers do not have to remember the extension.
+_win_name_matches = function(processName, wanted) {
+    var a = String(processName).toLowerCase();
+    var b = String(wanted).toLowerCase();
+    if (a === b) { return true; }
+    if (b.length > 0 && a === b + ".exe") { return true; }
+    return false;
+};
+
+// ---------------------------------------------------------------------------
+// Registry
+// ---------------------------------------------------------------------------
+
+// Reads a registry value. Throws when the value does not exist, unless a
+// fallback argument is supplied - in which case that is returned instead.
+// Passing an explicit undefined counts as supplying one.
+reg_read = function(key, fallback) {
+    try {
+        return _win_shell().RegRead(key);
+    } catch (e) {
+        if (arguments.length > 1) { return fallback; }
+        throw new Error("reg_read: cannot read " + key + ": " + e.message);
+    }
+};
+
+// Writes a registry value, creating the key if needed. type defaults to
+// REG_DWORD for numbers and REG_SZ for everything else; pass it explicitly for
+// REG_EXPAND_SZ or REG_BINARY.
+reg_write = function(key, value, type) {
+    if (!type) { type = (typeof value === "number") ? "REG_DWORD" : "REG_SZ"; }
+    try {
+        _win_shell().RegWrite(key, value, type);
+    } catch (e) {
+        throw new Error("reg_write: cannot write " + key + ": " + e.message);
+    }
+};
+
+// Deletes a value, or a key when the path ends in a backslash. Windows only
+// deletes an empty key - remove its values and subkeys first.
+reg_delete = function(key) {
+    try {
+        _win_shell().RegDelete(key);
+    } catch (e) {
+        throw new Error("reg_delete: cannot delete " + key + ": " + e.message);
+    }
+};
+
+// True when the value (or key) can be read. Never throws.
+reg_exists = function(key) {
+    try {
+        _win_shell().RegRead(key);
+        return true;
+    } catch (e) {
+        return false;
+    }
+};
+
+// ---------------------------------------------------------------------------
+// Environment
+// ---------------------------------------------------------------------------
+
+// One process environment variable, or "" when it is not set.
+env = function(name) {
+    return String(_win_shell().Environment("Process")(name));
+};
+
+// Expands %VARIABLES% in a string: expand_env("%TEMP%\\out.txt").
+expand_env = function(text) {
+    return String(_win_shell().ExpandEnvironmentStrings(text));
+};
+
+// ---------------------------------------------------------------------------
+// Processes
+// ---------------------------------------------------------------------------
+
+// Runs a command and returns its exit code.
+//
+// options:
+//   window   0 hidden, 1 normal.        default: 0
+//   wait     wait for it to finish.     default: true
+//
+// With wait:false the process is left running and 0 is returned - there is no
+// exit code to report yet.
+run_command = function(command, options) {
+    options = options || {};
+    var window_style = (typeof options.window === "number") ? options.window : 0;
+    var wait         = (typeof options.wait   === "boolean") ? options.wait : true;
+    return _win_shell().Run(command, window_style, wait);
+};
+
+// Runs a command through cmd.exe and captures what it printed.
+//
+// Returns { exit_code: number, stdout: string, stderr: string }.
+//
+// Output is redirected to temp files rather than read from shell.Exec()'s
+// pipes. Exec() looks simpler but deadlocks as soon as the child fills a pipe
+// buffer while the script is not draining that exact stream - a real failure
+// mode for anything chatty. Redirection has no such limit.
+//
+// options:
+//   window   0 hidden, 1 normal.               default: 0
+//   merge    fold stderr into stdout (2>&1).   default: false
+exec_command = function(command, options) {
+    options = options || {};
+    var window_style = (typeof options.window === "number") ? options.window : 0;
+
+    var fso    = new ActiveXObject("Scripting.FileSystemObject");
+    var tmpDir = fso.GetSpecialFolder(2).Path;
+    var stamp  = (new Date()).getTime() + "_" + Math.floor(Math.random() * 1000000);
+    var outPath = tmpDir + "\\jsw_exec_out_" + stamp + ".txt";
+    var errPath = tmpDir + "\\jsw_exec_err_" + stamp + ".txt";
+
+    // cmd.exe /s /c "..." strips exactly the outer pair of quotes and runs the
+    // rest verbatim, which is what keeps quoted paths inside `command` intact.
+    var redirect = options.merge
+        ? ' > "' + outPath + '" 2>&1'
+        : ' > "' + outPath + '" 2> "' + errPath + '"';
+    var full = 'cmd.exe /s /c "' + command + redirect + '"';
+
+    var exit_code = _win_shell().Run(full, window_style, true);
+
+    var readIfPresent = function(path) {
+        if (!file_exists(path)) { return ""; }
+        var text = "";
+        try { text = read_text_file(path); } catch (e) { text = ""; }
+        try { delete_file(path); } catch (e) {}
+        return text;
+    };
+
+    return {
+        exit_code: exit_code,
+        stdout:    readIfPresent(outPath),
+        stderr:    options.merge ? "" : readIfPresent(errPath)
+    };
+};
+
+// Lists running processes as objects:
+//   { pid: number, name: string, command_line: string, parent_pid: number }
+//
+// filter, when given, keeps only processes whose name matches it ("notepad"
+// and "notepad.exe" both match notepad.exe, case-insensitively).
+list_processes = function(filter) {
+    var items = _win_wmi().ExecQuery(
+        "SELECT ProcessId, Name, CommandLine, ParentProcessId FROM Win32_Process");
+    var out = [];
+    var e   = new Enumerator(items);
+    for (; !e.atEnd(); e.moveNext()) {
+        var p = e.item();
+        var name = String(p.Name);
+        if (filter && !_win_name_matches(name, filter)) { continue; }
+        out.push({
+            pid:          Number(p.ProcessId),
+            name:         name,
+            // CommandLine is null for processes this account may not inspect.
+            command_line: (p.CommandLine === null) ? "" : String(p.CommandLine),
+            parent_pid:   Number(p.ParentProcessId)
+        });
+    }
+    return out;
+};
+
+// True when at least one process with that name is running.
+process_exists = function(name) {
+    return list_processes(name).length > 0;
+};
+
+// Terminates processes by name ("notepad.exe") or by pid (a number).
+// Returns how many were terminated - 0 when nothing matched.
+//
+// Processes the current account may not terminate are skipped rather than
+// throwing, so one protected process does not abandon the rest of the batch.
+kill_process = function(name_or_pid) {
+    var by_pid = (typeof name_or_pid === "number");
+    var items  = _win_wmi().ExecQuery("SELECT ProcessId, Name FROM Win32_Process");
+    var killed = 0;
+    var e      = new Enumerator(items);
+    for (; !e.atEnd(); e.moveNext()) {
+        var p = e.item();
+        var match = by_pid
+            ? (Number(p.ProcessId) === name_or_pid)
+            : _win_name_matches(String(p.Name), name_or_pid);
+        if (!match) { continue; }
+        try {
+            p.Terminate();
+            killed++;
+        } catch (ex) {}
+    }
+    return killed;
 };
 
 
