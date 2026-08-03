@@ -11,7 +11,8 @@
 //       skip("does something else", "blocked on a known bug, see TODO.md");
 //   });
 //
-//   _test.summary();   // always call at the end to print results
+//   _test.summary();               // always call at the end to print results
+//   _test.summary({ exit: true }); // also set the process exit code (for CI)
 
 _test = (function() {
 
@@ -61,7 +62,11 @@ _test = (function() {
         _print('  SKIP  ' + name + (reason ? ' (' + reason + ')' : ''));
     };
 
-    api.summary = function() {
+    // options.exit (default false): when true, calls WScript.Quit(1) if any
+    // test failed (0 otherwise). Off by default so running a suite does not
+    // tear down a host that expects to keep going after summary() returns;
+    // pass { exit: true } from a suite that a CI runner invokes standalone.
+    api.summary = function(options) {
         var total = passed + failed;
         _print('');
         _print('=====================================');
@@ -75,6 +80,9 @@ _test = (function() {
             _print('  SKIPPED: ' + skipped);
         }
         _print('=====================================');
+        if (options && options.exit) {
+            WScript.Quit(failed === 0 ? 0 : 1);
+        }
     };
 
     // Counters, for suites that need to assert on the runner itself.

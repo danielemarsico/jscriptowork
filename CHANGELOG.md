@@ -56,6 +56,43 @@ reconstructed from the git history.
   rendered by the HTA's own IE engine fetching an `<img>` from
   api.qrserver.com (goqr.me's free, no-signup QR code API), so no image
   bytes are ever handled in JScript.
+- `.github/workflows/tests.yml` — CI on a `windows-latest` GitHub Actions
+  runner (the only kind with `cscript.exe`). Runs `bin\tests\run-tests.bat`
+  and fails the job on a non-zero exit code, then rebuilds `dist/` and
+  `git diff --exit-code`s it to catch a `dist/` that was committed without
+  rebuilding from `libs/`.
+- `libs/minitest.js`: `_test.summary({ exit: true })` now calls
+  `WScript.Quit(1)` if any test in the suite failed (`WScript.Quit(0)`
+  otherwise), so a runner can detect failure from the process exit code.
+  Off by default (`_test.summary()` with no argument keeps the old
+  print-only behaviour) so it does not tear down a host that expects to
+  keep going after summary() returns. Every suite in `bin/tests/` now calls
+  the `{ exit: true }` form.
+- `bin/tests/run-tests.bat` now tracks each suite's exit code and exits
+  non-zero itself if any suite failed. When `CI=true` (set automatically by
+  GitHub Actions) it also skips the interactive `test-ui.js` suite and the
+  final `pause`.
+- `libs/crypto.js`: `hmac_sha256_bytes(keyBytes, msgBytes)` — HMAC-SHA-256
+  over raw byte arrays, for keys/messages that are not valid UTF-8 strings
+  on their own (bytes `>= 0x80` used alone, e.g. a raw `0xaa` byte). Also
+  used internally by `hmac_sha256`, which is now a thin UTF-8-encoding
+  wrapper around it. `bin/tests/test-crypto.js` gained RFC 4231 test cases
+  3, 4, 6 and 7 (previously blocked/skipped, since those vectors use raw
+  `0xaa`/`0xcd`/`0xdd` key/data bytes) plus structural coverage for the new
+  function.
+- `bin/tests/test-http.js` gained an offline stub mode: set
+  `JSW_TEST_HTTP_OFFLINE=1` (or run with `CI=true`) to swap `http_request`
+  for a local fake that reproduces httpbin.org's responses for exactly the
+  requests this suite makes, so the whole file runs with no network access
+  and is immune to httpbin.org rate-limiting/downtime.
+- `bin/tests/test-build.js` — verifies `build.js`'s output by running
+  `cscript.exe build.js` as a real subprocess and checking the regenerated
+  `dist/launcher.js`: every lib in `libNames` is inlined (marker comment
+  *and* actual source), `load()` is stubbed to a no-op, and
+  `_jsw_hta_inline_libs` round-trips (via `eval`) back to the exact
+  concatenated source of the `htaLibNames` libs. `libNames`/`htaLibNames`
+  are read out of `build.js`'s own source, so the suite tracks that list
+  automatically.
 
 ### Fixed
 

@@ -36,4 +36,4 @@ describe("Ext.encode / Ext.decode", function() {
 // Summary
 // ---------------------------------------------------------------------------
 
-_test.summary();
+_test.summary({ exit: true });

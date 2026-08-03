@@ -117,4 +117,4 @@ describe("base64_encode_bytes/decode_bytes", function() {
 // Summary
 // ---------------------------------------------------------------------------
 
-_test.summary();
+_test.summary({ exit: true });

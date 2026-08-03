@@ -162,4 +162,4 @@ describe("open_hta - options", function() {
 // Summary
 // ---------------------------------------------------------------------------
 
-_test.summary();
+_test.summary({ exit: true });

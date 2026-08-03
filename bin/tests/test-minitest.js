@@ -295,4 +295,4 @@ describe("minitest - runner", function() {
 // Summary
 // ---------------------------------------------------------------------------
 
-_test.summary();
+_test.summary({ exit: true });

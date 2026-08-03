@@ -389,4 +389,4 @@ describe("read_binary_file", function() {
 // Summary
 // ---------------------------------------------------------------------------
 
-_test.summary();
+_test.summary({ exit: true });

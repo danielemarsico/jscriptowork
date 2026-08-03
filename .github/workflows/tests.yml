@@ -1,0 +1,22 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run test suite
+        shell: cmd
+        run: bin\tests\run-tests.bat
+
+      - name: Check dist/ is in sync with libs/
+        shell: cmd
+        run: |
+          cscript.exe //nologo //B build.js
+          git diff --exit-code -- dist/

@@ -347,4 +347,4 @@ describe("minimist - options object", function() {
 // Summary
 // ---------------------------------------------------------------------------
 
-_test.summary();
+_test.summary({ exit: true });

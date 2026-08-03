@@ -1,5 +1,12 @@
 // test-http.js - Integration tests for http_request (GET / POST over HTTPS)
-// Requires network access. Uses httpbin.org as the echo server.
+// Uses httpbin.org as the echo server by default (requires network access).
+//
+// Offline mode: set JSW_TEST_HTTP_OFFLINE=1 (or run under CI, which sets
+// CI=true automatically) to replace http_request with a local stub that
+// mimics httpbin's responses for exactly the requests this suite makes, so
+// the whole file runs with no network access and is immune to httpbin.org
+// rate-limiting/downtime.
+//
 // Run via:  cscript.exe launcher.js test-http.js
 
 load("core");
@@ -8,6 +15,75 @@ load("system");
 load("minitest");
 
 var BASE = "https://httpbin.org";
+
+// ---------------------------------------------------------------------------
+// Offline stub — swaps out http_request (bare assignment, per the load()/eval
+// scoping rule in CLAUDE.md) with a local fake that answers the exact request
+// shapes used below, without touching the network.
+// ---------------------------------------------------------------------------
+
+(function() {
+    var shellEnv = new ActiveXObject("WScript.Shell").Environment("Process");
+    var offline  = shellEnv("JSW_TEST_HTTP_OFFLINE") !== "" || shellEnv("CI") === "true";
+    if (!offline) { return; }
+
+    log("http_request tests running in OFFLINE stub mode - httpbin.org is not contacted.");
+
+    function parseQueryString(qs) {
+        var out = {};
+        if (!qs) { return out; }
+        var pairs = qs.split("&");
+        for (var i = 0; i < pairs.length; i++) {
+            var kv = pairs[i].split("=");
+            out[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1] || "");
+        }
+        return out;
+    }
+
+    function headerValue(headers, name) {
+        if (!headers) { return ""; }
+        for (var key in headers) {
+            if (Object.prototype.hasOwnProperty.call(headers, key) && key.toLowerCase() === name) {
+                return headers[key];
+            }
+        }
+        return "";
+    }
+
+    // Overrides the global http_request defined by system.js above.
+    http_request = function(url, method, reqListener, body, headers, timeout) {
+        if (["GET", "POST", "PUT", "DELETE"].indexOf(method) === -1) {
+            throw "method not recognized:" + method;
+        }
+        // 192.0.2.1 (RFC 5737 TEST-NET-1) is reserved and never routes, so a
+        // real request always exceeds any timeout - the stub reproduces that
+        // outcome directly instead of actually waiting it out.
+        if (url.indexOf("192.0.2.1") !== -1) {
+            throw "offline stub: simulated timeout for " + url;
+        }
+
+        var qIndex = url.indexOf("?");
+        var path   = qIndex === -1 ? url : url.substring(0, qIndex);
+        var query  = qIndex === -1 ? ""  : url.substring(qIndex + 1);
+
+        var status   = 200;
+        var response = { url: url, args: parseQueryString(query), headers: headers || {} };
+
+        if (path.indexOf("/status/") !== -1) {
+            status = parseInt(path.substring(path.lastIndexOf("/") + 1), 10);
+        } else if (method === "POST" && path.indexOf("/post") !== -1) {
+            if (headerValue(headers, "content-type").indexOf("application/json") !== -1) {
+                response.json = JSON.parse(body);
+                response.form = {};
+            } else {
+                response.json = null;
+                response.form = parseQueryString(body);
+            }
+        }
+
+        reqListener(JSON.stringify(response), status, "Content-Type: application/json\r\n");
+    };
+}());
 
 // ---------------------------------------------------------------------------
 // Helper: run a request and capture response text + status synchronously.
@@ -184,4 +260,4 @@ describe("http_request - POST (form body)", function() {
 // Summary
 // ---------------------------------------------------------------------------
 
-_test.summary();
+_test.summary({ exit: true });

@@ -782,4 +782,4 @@ describe("console shim", function() {
 // Print summary
 // ============================================================
 
-_test.summary();
+_test.summary({ exit: true });

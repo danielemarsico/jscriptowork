@@ -312,4 +312,4 @@ describe("http_request - offline", function() {
 // Summary
 // ---------------------------------------------------------------------------
 
-_test.summary();
+_test.summary({ exit: true });

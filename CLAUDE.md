@@ -122,7 +122,10 @@ describe("thing", function() {
     skip("does something else", "reason it is skipped");
 });
 
-_test.summary();   // required at the end of every suite
+_test.summary();               // required at the end of every suite
+_test.summary({ exit: true }); // also sets the process exit code (0/1) — every
+                                // suite in bin/tests/ uses this form so a
+                                // runner (run-tests.bat, CI) can detect failure
 ```
 
 Available assertions: `assert.ok`, `notOk`, `equal` (strict `!==`), `notEqual`,
@@ -142,9 +145,15 @@ Or a single suite:
 cscript.exe bin\launcher.js bin\tests\test-core.js
 ```
 
-**Tests cannot be run from Linux/macOS or from CI in this repo** — there is no
-`cscript.exe`. When you change library code, write or update the matching suite
-and state plainly that the suite was not executed; do not claim tests pass.
+**Tests cannot be run from Linux/macOS** — there is no `cscript.exe` outside
+Windows. When you change library code on a non-Windows machine, write or
+update the matching suite and state plainly that the suite was not executed;
+do not claim tests pass. CI (`.github/workflows/tests.yml`) runs on a
+`windows-latest` GitHub Actions runner, which does have `cscript.exe`, and
+invokes `bin\tests\run-tests.bat` directly; it sets `CI=true`, which
+`run-tests.bat` uses to skip the interactive `test-ui.js` suite and the final
+`pause`, and which `test-http.js` uses to switch to its offline stub (see
+below) so the job isn't at the mercy of httpbin.org's uptime.
 
 Suites and what they need:
 
@@ -160,7 +169,8 @@ Suites and what they need:
 | `test-system.js` | temp folder write access |
 | `test-filesystem.js` | temp folder write access |
 | `test-helpers.js` | temp folder write access (Office parts are skipped) |
-| `test-http.js` | network access to httpbin.org |
+| `test-build.js` | spawns `cscript.exe build.js` as a subprocess (regenerates `dist/`) |
+| `test-http.js` | network access to httpbin.org — or set `JSW_TEST_HTTP_OFFLINE=1` (or `CI=true`) to use a local stub instead |
 | `test-ui.js` | interactive desktop; HTA windows flash on screen |
 
 ## Build

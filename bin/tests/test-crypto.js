@@ -271,13 +271,72 @@ describe("hmac_sha256 - RFC 4231 known-answer vectors", function() {
         );
     });
 
-    // RFC 4231 test cases 3, 4, 6 and 7 use keys made of bytes >= 0x80
-    // (0xaa repeated). Those are not reachable through a UTF-8 string API —
-    // U+00AA encodes to two bytes (0xC2 0xAA), not one — so they are skipped.
-    skip("RFC 4231 test case 3 (20-byte 0xaa key)",
-         "a raw 0xaa key byte cannot be expressed as a UTF-8 string; needs an hmac_sha256_bytes() overload");
-    skip("RFC 4231 test case 6 (131-byte 0xaa key)",
-         "same reason; the oversized-key path is covered by the ASCII cases below");
+    // RFC 4231 test cases 3, 4, 6 and 7 use raw key/data bytes >= 0x80 (e.g.
+    // 0xaa repeated). Those are not reachable through a UTF-8 string API —
+    // U+00AA encodes to two bytes (0xC2 0xAA), not one — so they are expressed
+    // via hmac_sha256_bytes() with explicit byte arrays instead.
+    function repeatByte(b, n) {
+        var out = [];
+        for (var i = 0; i < n; i++) { out.push(b); }
+        return out;
+    }
+
+    it("RFC 4231 test case 3 (20-byte 0xaa key, 50-byte 0xdd data)", function() {
+        assert.equal(
+            hmac_sha256_bytes(repeatByte(0xaa, 20), repeatByte(0xdd, 50)),
+            "773ea91e36800e46854db8ebd09181a72959098b3ef8c122d9635514ced565fe"
+        );
+    });
+
+    it("RFC 4231 test case 4 (25-byte incrementing key, 50-byte 0xcd data)", function() {
+        var key = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a,
+                   0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14,
+                   0x15, 0x16, 0x17, 0x18, 0x19];
+        assert.equal(
+            hmac_sha256_bytes(key, repeatByte(0xcd, 50)),
+            "82558a389a443c0ea4cc819899f2083a85f0faa3e578f8077a2e3ff46729665b"
+        );
+    });
+
+    it("RFC 4231 test case 6 (131-byte 0xaa key, ASCII data)", function() {
+        assert.equal(
+            hmac_sha256_bytes(repeatByte(0xaa, 131), _sha256_to_utf8("Test Using Larger Than Block-Size Key - Hash Key First")),
+            "60e431591ee0b67f0d8a26aacbf5b77f8e0bc6213728c5140546040f0ee37f54"
+        );
+    });
+
+    it("RFC 4231 test case 7 (131-byte 0xaa key, longer ASCII data)", function() {
+        var data = "This is a test using a larger than block-size key and a larger than block-size data. The key needs to be hashed before being used by the HMAC algorithm.";
+        assert.equal(
+            hmac_sha256_bytes(repeatByte(0xaa, 131), _sha256_to_utf8(data)),
+            "9b09ffa71b942fcb27635fbcd5b0e944bfdc63644f0713938a7f51535c3a35e2"
+        );
+    });
+
+});
+
+// ---------------------------------------------------------------------------
+// hmac_sha256_bytes — structural / relationship to hmac_sha256
+// ---------------------------------------------------------------------------
+
+describe("hmac_sha256_bytes - structural", function() {
+
+    it("returns exactly 64 hex characters", function() {
+        assert.equal(hmac_sha256_bytes([1, 2, 3], [4, 5, 6]).length, 64);
+    });
+
+    it("agrees with hmac_sha256() when bytes are the UTF-8 encoding of the equivalent strings", function() {
+        assert.equal(
+            hmac_sha256_bytes(_sha256_to_utf8("key"), _sha256_to_utf8("message")),
+            hmac_sha256("key", "message")
+        );
+    });
+
+    it("does not mutate the input key array", function() {
+        var key = [1, 2, 3];
+        hmac_sha256_bytes(key, [4, 5, 6]);
+        assert.deepEqual(key, [1, 2, 3]);
+    });
 
 });
 
@@ -328,4 +387,4 @@ describe("hmac_sha256 - key lengths", function() {
 // Summary
 // ---------------------------------------------------------------------------
 
-_test.summary();
+_test.summary({ exit: true });

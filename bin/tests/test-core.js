@@ -519,4 +519,4 @@ describe("Date.prototype.toJSON", function() {
 // Summary
 // ---------------------------------------------------------------------------
 
-_test.summary();
+_test.summary({ exit: true });

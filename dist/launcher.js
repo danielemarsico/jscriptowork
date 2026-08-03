@@ -1,5 +1,5 @@
 // jscriptowork bundled launcher
-// Generated: 2026-08-03 17:17
+// Generated: 2026-08-03 17:47
 //
 // All libs are inlined. No separate libs/ folder is needed.
 // open_hta() injects lib source inline into generated HTAs.
@@ -2799,9 +2799,10 @@ base64_decode = function(str) {
 
 // crypto.js - Cryptographic hash functions for JScript / CScript
 // ---------------------------------------------------------------------------
-//   sha256(message)            SHA-256 of a UTF-8 string  →  64-char hex
-//   sha256_bytes(byteArray)    SHA-256 of a byte array (integers 0-255)  →  64-char hex
-//   hmac_sha256(key, message)  HMAC-SHA-256 of two UTF-8 strings  →  64-char hex
+//   sha256(message)                    SHA-256 of a UTF-8 string  →  64-char hex
+//   sha256_bytes(byteArray)            SHA-256 of a byte array (integers 0-255)  →  64-char hex
+//   hmac_sha256(key, message)          HMAC-SHA-256 of two UTF-8 strings  →  64-char hex
+//   hmac_sha256_bytes(keyBytes, msgBytes)  HMAC-SHA-256 of two byte arrays  →  64-char hex
 //
 // Pure ES3 syntax — no arrow functions, let/const, template literals, etc.
 // All public functions are assigned without 'var' so they survive load()'s eval scope.
@@ -2954,29 +2955,37 @@ sha256 = function(message) {
     return sha256_bytes(_sha256_to_utf8(message));
 };
 
-// HMAC-SHA-256.  Both key and message are UTF-8 strings.
-// Returns a 64-char lowercase hex string.
-hmac_sha256 = function(key, message) {
-    var keyBytes = _sha256_to_utf8(key);
-    var msgBytes = _sha256_to_utf8(message);
+// HMAC-SHA-256 of two raw byte arrays (integers 0-255).  Returns a 64-char
+// lowercase hex string. Use this instead of hmac_sha256() when the key or
+// message contains bytes >= 0x80 that are not valid UTF-8 on their own (e.g.
+// RFC 4231 test cases 3/4/6/7, which use raw 0xaa/0xcd/0xdd key/data bytes).
+hmac_sha256_bytes = function(keyBytes, msgBytes) {
+    // Work on a copy so the caller's key array is not mutated
+    var key = keyBytes.slice();
 
     // Keys longer than the block size (64 bytes) are replaced by their hash
-    if (keyBytes.length > 64) {
-        keyBytes = _sha256_from_hex(sha256_bytes(keyBytes));
+    if (key.length > 64) {
+        key = _sha256_from_hex(sha256_bytes(key));
     }
     // Zero-pad the key to exactly one block
-    while (keyBytes.length < 64) keyBytes.push(0x00);
+    while (key.length < 64) key.push(0x00);
 
     // Build inner and outer padded keys
     var ipad = [], opad = [], i;
     for (i = 0; i < 64; i++) {
-        ipad.push(keyBytes[i] ^ 0x36);
-        opad.push(keyBytes[i] ^ 0x5C);
+        ipad.push(key[i] ^ 0x36);
+        opad.push(key[i] ^ 0x5C);
     }
 
     // HMAC = SHA256(opad || SHA256(ipad || message))
     var inner = _sha256_from_hex(sha256_bytes(ipad.concat(msgBytes)));
     return sha256_bytes(opad.concat(inner));
+};
+
+// HMAC-SHA-256.  Both key and message are UTF-8 strings.
+// Returns a 64-char lowercase hex string.
+hmac_sha256 = function(key, message) {
+    return hmac_sha256_bytes(_sha256_to_utf8(key), _sha256_to_utf8(message));
 };
 
 
@@ -2997,7 +3006,8 @@ hmac_sha256 = function(key, message) {
 //       skip("does something else", "blocked on a known bug, see TODO.md");
 //   });
 //
-//   _test.summary();   // always call at the end to print results
+//   _test.summary();               // always call at the end to print results
+//   _test.summary({ exit: true }); // also set the process exit code (for CI)
 
 _test = (function() {
 
@@ -3047,7 +3057,11 @@ _test = (function() {
         _print('  SKIP  ' + name + (reason ? ' (' + reason + ')' : ''));
     };
 
-    api.summary = function() {
+    // options.exit (default false): when true, calls WScript.Quit(1) if any
+    // test failed (0 otherwise). Off by default so running a suite does not
+    // tear down a host that expects to keep going after summary() returns;
+    // pass { exit: true } from a suite that a CI runner invokes standalone.
+    api.summary = function(options) {
         var total = passed + failed;
         _print('');
         _print('=====================================');
@@ -3061,6 +3075,9 @@ _test = (function() {
             _print('  SKIPPED: ' + skipped);
         }
         _print('=====================================');
+        if (options && options.exit) {
+            WScript.Quit(failed === 0 ? 0 : 1);
+        }
     };
 
     // Counters, for suites that need to assert on the runner itself.
