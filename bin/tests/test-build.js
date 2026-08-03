@@ -149,6 +149,41 @@ describe("build.js - _jsw_hta_inline_libs is valid escaped source", function() {
 });
 
 // ---------------------------------------------------------------------------
+// Reproducibility
+//
+// dist/ is committed, and CI rebuilds it and runs
+// `git diff --exit-code -- dist/` to catch a dist/ committed without a rebuild.
+// That check only means anything if the build is deterministic: build.js used
+// to stamp `// Generated: <date time>` into the header, which made the check
+// fail on every run no matter what. Guard against any such content returning.
+// ---------------------------------------------------------------------------
+
+describe("build.js - reproducible output", function() {
+
+    it("a second build produces byte-identical output", function() {
+        var cmd      = 'cscript.exe //nologo //B "' + ROOT_FOLDER + 'build.js"';
+        var exitCode = shell.Run(cmd, 0, true);
+        assert.equal(exitCode, 0, "second build did not exit cleanly");
+
+        var rebuilt = readRaw(distPath);
+        assert.equal(rebuilt.length, distSrc.length,
+            "dist/launcher.js changed length between two consecutive builds (" +
+            distSrc.length + " then " + rebuilt.length + ") - the build is not " +
+            "reproducible, so the CI drift check can never pass");
+        assert.equal(rebuilt, distSrc,
+            "dist/launcher.js differs between two consecutive builds - the build " +
+            "is not reproducible, so the CI drift check can never pass");
+    });
+
+    it("the header carries no build timestamp", function() {
+        assert.equal(distSrc.indexOf("// Generated: "), -1,
+            "dist/launcher.js embeds a generation timestamp; that makes every " +
+            "rebuild differ and breaks the CI dist/ drift check");
+    });
+
+});
+
+// ---------------------------------------------------------------------------
 // Summary
 // ---------------------------------------------------------------------------
 
