@@ -1,11 +1,5 @@
 // test-minimist.js - Tests for libs/minimist.js
 //
-// Only long options (--flag) are covered by live tests. Short options (-f) are
-// currently unusable under JScript: minimist reads the last character of an
-// argument with `arg.slice(-1)[0]`, and JScript does not support string bracket
-// indexing, so every short option throws. Those cases are recorded with skip()
-// and tracked in TODO.md.
-//
 // Note: minimist requires an options object; every call below passes one.
 //
 // Run via:  cscript.exe launcher.js test-minimist.js
@@ -305,14 +299,39 @@ describe("minimist - unknown callback", function() {
 
 describe("minimist - short options", function() {
 
-    var BUG = "libs/minimist.js:195 uses arg.slice(-1)[0]; JScript has no string indexing (TODO.md)";
+    it("parses -f value", function() {
+        var argv = minimist(["-f", "bar"], {});
+        assert.equal(argv.f, "bar");
+        assert.deepEqual(argv._, []);
+    });
 
-    skip("parses -f value",                      BUG);
-    skip("parses a boolean short flag -v",       BUG);
-    skip("expands a cluster -abc to three flags", BUG);
-    skip("parses -n5 as n=5",                    BUG);
-    skip("parses -x=1 as x=1",                   BUG);
-    skip("mirrors a short flag onto its alias",  BUG);
+    it("parses a boolean short flag -v", function() {
+        var argv = minimist(["-v"], { boolean: "v" });
+        assert.equal(argv.v, true);
+    });
+
+    it("expands a cluster -abc to three flags", function() {
+        var argv = minimist(["-abc"], {});
+        assert.equal(argv.a, true);
+        assert.equal(argv.b, true);
+        assert.equal(argv.c, true);
+    });
+
+    it("parses -n5 as n=5", function() {
+        var argv = minimist(["-n5"], {});
+        assert.equal(argv.n, 5);
+    });
+
+    it("parses -x=1 as x=1", function() {
+        var argv = minimist(["-x=1"], {});
+        assert.equal(argv.x, 1);
+    });
+
+    it("mirrors a short flag onto its alias", function() {
+        var argv = minimist(["-f", "bar"], { alias: { f: "file" } });
+        assert.equal(argv.f, "bar");
+        assert.equal(argv.file, "bar");
+    });
 
 });
 

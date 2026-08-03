@@ -42,6 +42,41 @@ reconstructed from the git history.
 
 ### Fixed
 
+- `parse_date` (`libs/system.js`) read `d.substring(...)` before `d` was
+  assigned and ignored its own `ds` parameter, so every call threw
+  `TypeError: 'd' is undefined`. Now uses `ds` for the substrings, declares `d`
+  first, and falls back to returning the input string for an unrecognized
+  format.
+- `minimist` short options (`libs/minimist.js`) were unusable: `arg.slice(-1)[0]`
+  relies on string bracket indexing, which JScript 5.8 does not support, so
+  `key` was always `undefined`. Changed to `arg.charAt(arg.length - 1)`; `-f
+  value`, `-v`, `-abc` clustering, `-n5`, `-x=1`, and short-flag aliasing all
+  work now.
+- `read_sheet_data` (`libs/helpers.js`) branched on `typeof value == "date"`,
+  which is never true (`typeof` a `Date` is `"object"`), so date cells fell
+  through to `value.trim()` and threw. Now checks `value instanceof Date`.
+- `read_sheet_data` threw on a numeric cell in the first column under
+  auto-detected column count: the end-of-rows check called `v.trim()` before
+  any type conversion. Now converts with `String(v)` first.
+- `read_sheet_data` threw on a boolean cell, since booleans matched none of the
+  `typeof` branches and fell through to `value.trim()`. Added a `String(value)`
+  fallback for any unhandled type.
+- `read_date_from_input` (`libs/helpers.js`) matched with an unanchored
+  `/\d{8}/`, so `abc20240115` was accepted, `parseInt("abc2")` produced `NaN`,
+  and the function returned a (truthy) Invalid Date instead of retrying. The
+  pattern is now anchored (`/^\d{8}$/`) and the resulting date is validated
+  with `isNaN(d.getTime())` before returning.
+- `randomString` (`libs/system.js`) was a `function` declaration inside a lib,
+  so it was scoped to `load()` and unreachable from scripts run through
+  `bin/launcher.js` (only reachable via the bundled `dist/launcher.js`).
+  Converted to `randomString = function(...)` for consistent behaviour.
+- `INPUT_FOLDER`, `OUTPUT_FOLDER`, and `DATABASEPATH` are read but never
+  defined by either launcher, so `load_working_directory`, `write_report_to_file`,
+  and `do_in_access` (without an explicit filename) threw `ReferenceError`
+  whenever a caller hadn't defined them. All three now guard the reference with
+  `typeof ... !== "undefined"` and fall back to `""`, so they only throw if a
+  caller genuinely needs a value neither the global nor an explicit parameter
+  supplied.
 - `bin/tests/test-crypto.js` had two incorrect expected digests, so the suite
   reported failures against a correct implementation. Both now match the
   published vectors (verified independently):

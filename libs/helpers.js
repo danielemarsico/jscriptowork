@@ -83,22 +83,22 @@ read_date_from_input = function (){//format YYYYMMDD
         
         write_line("enter delivery date format (YYYYMMDD): ");       
         var input = read_line().trim();
-        var result = input.match(/\d{8}/);
-        
+        var result = input.match(/^\d{8}$/);
+
         if(result!=null){
-            
+
             //formatted_resolution_date = resolution_date = resolution_date.substring(0,4)+resolution_date.substring(5,7)+resolution_date.substring(8,10);
             var year  =  parseInt(input.substring(0,4),10);
             var month =  parseInt(input.substring(4,6),10)-1;
             var day   =  parseInt(input.substring(6,8),10);
-            var delivery_date = new Date(year, month, day, 0, 0, 0, 0); 
-            
-            if(delivery_date){
-                
+            var delivery_date = new Date(year, month, day, 0, 0, 0, 0);
+
+            if(delivery_date && !isNaN(delivery_date.getTime())){
+
                 return delivery_date;
-                
+
             }
-            
+
         }
         
     }
@@ -156,7 +156,8 @@ do_in_access = function (to_do,database_filename){
 	access.Visible = false;
     
     
-	var db = typeof database_filename !== "undefined" ? database_filename: DATABASEPATH;
+	var db = typeof database_filename !== "undefined" ? database_filename
+		: (typeof DATABASEPATH !== "undefined" ? DATABASEPATH : "");
 	
     access.OpenCurrentDataBase(CURRENT_FOLDER+"/"+db);
     
@@ -347,8 +348,8 @@ read_sheet_data = function (sheet,ncolumns,params){
 		check_empty = function(sheet,row){
 			
 			var v = sheet.Cells(row,1).Value;
-			
-			return !v || v.trim() == "" || typeof(v)== 'undefined';
+
+			return !v || String(v).trim() == "" || typeof(v)== 'undefined';
 		}
 		
 		while(!isempty && counter < MAX_COLUMNS){
@@ -366,7 +367,7 @@ read_sheet_data = function (sheet,ncolumns,params){
 			
 	}
     
-    log("n° of columns: "+labels.length);
+    log("nï¿½ of columns: "+labels.length);
 	log(labels);
                         
     var row_counter = start_row+1;
@@ -396,10 +397,10 @@ read_sheet_data = function (sheet,ncolumns,params){
 			//log(labels[i-1]+":"+value+" - "+typeof value);
 			
 			if(typeof value == "number"){
-				
+
 				value = value.toString()
-				
-			}else if(typeof value == "date"){
+
+			}else if(value instanceof Date){
                 
                 
                try{
@@ -418,9 +419,12 @@ read_sheet_data = function (sheet,ncolumns,params){
             }
             else if(typeof value == "undefined" || value==null || !value){
                     value= "";
-            
+
             }
-			
+			else{
+				value = String(value);
+			}
+
 			problem[labels[i-1]] = value.trim();
             
         }
@@ -440,21 +444,22 @@ write_report_to_file = function (report_data,filepath){
     
     var d = new Date();
     var report = "";
-    
+    var output_folder = typeof OUTPUT_FOLDER !== "undefined" ? OUTPUT_FOLDER : "";
+
     if(filepath){
-        
+
         var current_date = "-"+d.getTime();
-        
+
         var tokens = filepath.split("\\");
         filename_radix = (tokens[tokens.length-1]).replace(/\.xls(x)?/,"");
-        
-        report = CURRENT_FOLDER.replace(/\\/g, "/")+OUTPUT_FOLDER+"/"+filename_radix+ current_date + ".txt";
+
+        report = CURRENT_FOLDER.replace(/\\/g, "/")+output_folder+"/"+filename_radix+ current_date + ".txt";
     }else{
-        
+
         var current_date = (""+d.getFullYear()).substring(2)+("0"+(d.getMonth()+1)).slice(-2)+("0"+(d.getDate())).slice(-2)+"-"+d.getTime();
-    
-        report = CURRENT_FOLDER.replace(/\\/g, "/")+OUTPUT_FOLDER+"/"+"consistency_analysis_report-"+ current_date + ".txt";
-        
+
+        report = CURRENT_FOLDER.replace(/\\/g, "/")+output_folder+"/"+"consistency_analysis_report-"+ current_date + ".txt";
+
     }
     log("saving report to : " + report);
     write_text_to_file(report_data,report);

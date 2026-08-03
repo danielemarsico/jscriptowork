@@ -60,12 +60,26 @@ describe("format_date", function() {
 
 describe("parse_date", function() {
 
-    var BUG = "libs/system.js:161 reads d.substring() before d is assigned and ignores its ds parameter, so every call throws (TODO.md)";
+    it("parses DD/MM/YYYY into a Date", function() {
+        var d = parse_date("02/01/2020", "DD/MM/YYYY");
+        assert.ok(d instanceof Date);
+    });
 
-    skip("parses DD/MM/YYYY into a Date",                BUG);
-    skip("returns a Date whose day/month/year match",    BUG);
-    skip("round-trips with format_date",                 BUG);
-    skip("falls back to the input for an unknown format", BUG);
+    it("returns a Date whose day/month/year match", function() {
+        var d = parse_date("25/11/2021", "DD/MM/YYYY");
+        assert.equal(d.getDate(), 25);
+        assert.equal(d.getMonth(), 10);
+        assert.equal(d.getFullYear(), 2021);
+    });
+
+    it("round-trips with format_date", function() {
+        var d = parse_date("02/01/2020", "DD/MM/YYYY");
+        assert.equal(format_date(d, "YYYY/MM/DD"), "2020/01/02");
+    });
+
+    it("falls back to the input for an unknown format", function() {
+        assert.equal(parse_date("02/01/2020", "DD-MM-YYYY"), "02/01/2020");
+    });
 
 });
 
@@ -74,20 +88,6 @@ describe("parse_date", function() {
 // ---------------------------------------------------------------------------
 
 describe("randomString", function() {
-
-    // randomString is a `function` declaration inside system.js, so it is
-    // scoped to load() and unreachable when running through bin/launcher.js.
-    // It IS reachable from the bundled dist/launcher.js, where libs are inlined
-    // at top level — so run the tests when it is there, skip when it is not.
-    if (typeof randomString !== "function") {
-        var GONE = "randomString is not a global under bin/launcher.js; it is declared with `function` instead of an assignment (TODO.md)";
-        skip("returns a string of the requested length", GONE);
-        skip("returns an empty string for length 0",     GONE);
-        skip("uses only characters from the charset",    GONE);
-        skip("uses the default alphanumeric charset",    GONE);
-        skip("produces different values on repeat calls", GONE);
-        return;
-    }
 
     it("returns a string of the requested length", function() {
         assert.equal(typeof randomString(10), "string");
@@ -185,8 +185,15 @@ describe("working directory", function() {
         assert.equal(load_working_directory().indexOf("\r"), -1);
     });
 
-    skip("falls back to CURRENT_FOLDER + INPUT_FOLDER when no .workspace exists",
-         "INPUT_FOLDER is never defined by either launcher, so the fallback throws ReferenceError (TODO.md)");
+    it("falls back to CURRENT_FOLDER + INPUT_FOLDER when no .workspace exists", function() {
+        if (file_exists(WS_PATH)) { delete_file(WS_PATH); }
+        assert.equal(load_working_directory(), CURRENT_FOLDER + "\\");
+
+        // assigned without `var` so it becomes a real global, per the
+        // load()/eval scoping rule documented in CLAUDE.md.
+        INPUT_FOLDER = "in";
+        assert.equal(load_working_directory(), CURRENT_FOLDER + "in" + "\\");
+    });
 
     // restore whatever was there before
     if (backup === null) {

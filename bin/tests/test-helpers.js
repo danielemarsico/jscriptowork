@@ -295,10 +295,21 @@ describe("read_sheet_data - auto column detection", function() {
         assert.deepEqual(read_sheet_data(sheet), [{ a: "1", b: "" }]);
     });
 
-    skip("reads a numeric cell in the first column",
-         "the auto-detect end-of-rows check calls v.trim() on column 1, which throws for a number; pass ncolumns as a workaround (TODO.md)");
-    skip("reads a boolean cell",
-         "boolean cells match none of the type branches and reach value.trim(), which throws (TODO.md)");
+    it("reads a numeric cell in the first column", function() {
+        var sheet = mock_sheet([
+            ["qty", "name"],
+            [42, "bolt"]
+        ]);
+        assert.deepEqual(read_sheet_data(sheet), [{ qty: "42", name: "bolt" }]);
+    });
+
+    it("reads a boolean cell", function() {
+        var sheet = mock_sheet([
+            ["a", "flag"],
+            ["1", true]
+        ]);
+        assert.deepEqual(read_sheet_data(sheet), [{ a: "1", flag: "true" }]);
+    });
 
 });
 
@@ -377,10 +388,21 @@ describe("read_sheet_data - start_row", function() {
 
 describe("read_sheet_data - date cells", function() {
 
-    skip("formats a Date cell as YYYY/MM/DD",
-         "the branch tests typeof value == 'date', which is never true; a Date cell reaches value.trim() and throws (TODO.md)");
-    skip("survives a Date cell without throwing",
-         "same root cause (TODO.md)");
+    it("formats a Date cell as YYYY/MM/DD", function() {
+        var sheet = mock_sheet([
+            ["a", "when"],
+            ["1", new Date(2020, 0, 2)]
+        ]);
+        assert.deepEqual(read_sheet_data(sheet), [{ a: "1", when: "2020/01/02" }]);
+    });
+
+    it("survives a Date cell without throwing", function() {
+        var sheet = mock_sheet([
+            ["a", "when"],
+            ["1", new Date(2021, 8, 5)]
+        ]);
+        assert.doesNotThrow(function() { read_sheet_data(sheet); });
+    });
 
 });
 
@@ -645,8 +667,14 @@ describe("read_date_from_input", function() {
         assert.equal(d.getFullYear(), 2024);
     });
 
-    skip("rejects eight digits embedded in other text",
-         "the match is /\\d{8}/ and is not anchored, so 'abc20240115' is accepted and yields an Invalid Date (TODO.md)");
+    it("rejects eight digits embedded in other text", function() {
+        stub_input(["abc20240115", "20240115"]);
+        var d = read_date_from_input();
+        restore_input();
+        assert.equal(d.getFullYear(), 2024);
+        assert.equal(d.getMonth(),    0);
+        assert.equal(d.getDate(),     15);
+    });
 
 });
 
@@ -680,8 +708,21 @@ describe("Office COM wrappers", function() {
          "needs Word installed; launches a real COM server");
     skip("do_in_access opens the database and closes it afterwards",
          "needs Access installed and a .accdb fixture");
-    skip("write_report_to_file writes the report next to the source file",
-         "OUTPUT_FOLDER is never defined by either launcher, so the call throws ReferenceError (TODO.md)");
+    it("write_report_to_file writes the report next to the source file", function() {
+        // assigned without `var` so it becomes a real global, per the
+        // load()/eval scoping rule documented in CLAUDE.md.
+        OUTPUT_FOLDER = "";
+
+        var source = tmp("mydata.xlsx");
+        write_text_to_file("source", source);
+
+        write_report_to_file("hello report", source);
+
+        var written = select_files_from_folder(CURRENT_FOLDER, "", /mydata-\d+\.txt$/);
+        assert.equal(written.length, 1);
+        assert.equal(read_text_file(written[0]), "hello report");
+        delete_file(written[0]);
+    });
 
 });
 

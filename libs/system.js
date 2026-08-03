@@ -3,9 +3,10 @@ load_working_directory = function (){
 	var path = CURRENT_FOLDER+"/.workspace";
     var workspace = read_all_text_file(path);
 	if(!workspace){
-		
-		return CURRENT_FOLDER+INPUT_FOLDER+"\\";
-	
+
+		var input_folder = typeof INPUT_FOLDER !== "undefined" ? INPUT_FOLDER : "";
+		return CURRENT_FOLDER+input_folder+"\\";
+
 	}else{
 		
 		return workspace.trim();
@@ -132,7 +133,7 @@ list_folders = function (path){
 }
 
 
-function randomString(len, charSet) {
+randomString = function(len, charSet) {
     charSet = charSet || 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     var randomString = '';
     for (var i = 0; i < len; i++) {
@@ -159,27 +160,28 @@ format_date = function(d,format){
 }
 
 parse_date = function(ds,format){
-	
+
+	var d = new Date();
+
 	if(format == 'DD/MM/YYYY' ){
-		
-		var day   = d.substring(0,2);
-		var month = d.substring(3,5);
-		var year  = d.substring(6,10);
-		var d = new Date();
-		
+
+		var day   = ds.substring(0,2);
+		var month = ds.substring(3,5);
+		var year  = ds.substring(6,10);
+
 		d.setFullYear(year);
 		d.setMonth(parseInt(month)-1);
 		d.setDate(parseInt(day))
 		return d;
 		//return (""+d.getFullYear())+"/"+("0"+(d.getMonth()+1)).slice(-2)+"/"+("0"+(d.getDate())).slice(-2);
-		
+
 	}else{
 		log('format not recognized')
-		return d.toString();
+		return ds;
 	}
-	
-	
-	
+
+
+
 }
 
 

@@ -6,56 +6,6 @@ bug is fixed.
 
 ## Bugs
 
-### High — these throw at runtime
-
-- [ ] **[test]** `parse_date(ds, format)` (`libs/system.js:161`) is broken. The
-      body reads `d.substring(...)` before `var d = new Date()` is assigned, and
-      ignores its own `ds` parameter, so *every* call throws
-      `TypeError: 'd' is undefined` — including the `format not recognized`
-      branch, which also ends with `return d.toString()`.
-      Fix: use `ds` for the substrings and declare `d` first.
-      → `bin/tests/test-system.js`, `describe("parse_date")`
-- [ ] **[test]** `minimist` short options are unusable
-      (`libs/minimist.js:195`). `var key = arg.slice(-1)[0]` uses string bracket
-      indexing, which JScript 5.8 does not support (see the note at the top of
-      `libs/crypto.js`), so `key` is `undefined` and `key.split('.')` throws for
-      any `-x`-style argument. Fix: `arg.charAt(arg.length - 1)`.
-      → `bin/tests/test-minimist.js`, `describe("minimist - short options")`
-- [ ] **[test]** `read_sheet_data` (`libs/helpers.js:402`) branches on
-      `typeof value == "date"`, which is never true — `typeof` a `Date` is
-      `"object"`. A real date cell therefore falls through to `value.trim()` and
-      throws. Fix: test with `value instanceof Date` (or
-      `Object.prototype.toString.call(value) === '[object Date]'`).
-      → `bin/tests/test-helpers.js`, `describe("read_sheet_data - date cells")`
-- [ ] **[test]** `read_sheet_data` throws on a numeric cell in the **first**
-      column when column count is auto-detected: the end-of-rows check
-      (`libs/helpers.js:349`) calls `v.trim()` before any type conversion, and
-      numbers have no `trim`. Passing `ncolumns` avoids it, because that branch
-      uses `v.toString().trim()`. Fix: convert with `String(v)` in both checks.
-      → `bin/tests/test-helpers.js`, `describe("read_sheet_data - auto column detection")`
-- [ ] **[test]** `read_sheet_data` throws on a boolean cell — booleans match none
-      of the `typeof` branches (`libs/helpers.js:398`) and fall through to
-      `value.trim()`. Fix: default to `String(value)` for anything unhandled.
-      → `bin/tests/test-helpers.js`, `describe("read_sheet_data - auto column detection")`
-- [ ] **[test]** `read_date_from_input` matches with an unanchored `/\d{8}/`
-      (`libs/helpers.js:86`), so `abc20240115` is accepted, `parseInt("abc2")`
-      yields `NaN`, and the function returns an **Invalid Date** — which is
-      truthy, so the retry loop does not catch it. Fix: anchor the pattern with
-      `/^\d{8}$/` and validate the resulting date.
-      → `bin/tests/test-helpers.js`, `describe("read_date_from_input")`
-- [ ] `INPUT_FOLDER`, `OUTPUT_FOLDER`, and `DATABASEPATH` are read but never
-      defined by either launcher, so `load_working_directory`
-      (`libs/system.js:7`), `write_report_to_file` (`libs/helpers.js:451`), and
-      `do_in_access` without an explicit filename (`libs/helpers.js:159`) throw
-      `ReferenceError`. Decide whether the launchers should define defaults or
-      the helpers should take them as parameters.
-- [ ] `randomString` (`libs/system.js:135`) is a `function` declaration inside a
-      lib, so it is scoped to `load()` and is **not** reachable from scripts run
-      through `bin/launcher.js` — while it *is* reachable from the bundled
-      `dist/launcher.js`. Convert it to `randomString = function(...)` for
-      consistent behaviour. Same class of bug to watch for in any new lib.
-      → `bin/tests/test-system.js`, `describe("randomString")`
-
 ### Medium
 
 - [ ] `read_all_text_file` in `bin/launcher.js` and `bin/tests/launcher.js` has
@@ -170,3 +120,11 @@ bug is fixed.
       → `bin/tests/test-helpers.js`, `describe("Office COM wrappers")`
 - [ ] `dist/launcher.js` is committed but nothing checks it is in sync with
       `libs/`; a drift check (rebuild + compare) belongs in CI.
+
+## New feature and improvements
+
+- [ ] create github pages to advertise the project
+- [ ] add button ko-fi to github pages 
+- [ ] add a feture to minimize and possible obfuscate the library js
+- [ ] add the minimized and obfuscated (if possible) library as pacakge for every release
+- [ ] add a tool to "compile" a single file from library and the script devveloped, so it can be luacnhed just with cscript.exe myscript.exe

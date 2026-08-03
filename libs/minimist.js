@@ -192,7 +192,7 @@ minimist = function(args,opts){
                 }
             }
             
-            var key = arg.slice(-1)[0];
+            var key = arg.charAt(arg.length - 1);
             if (!broken && key !== '-') {
                 if (args[i+1] && !/^(-|--)[^-]/.test(args[i+1])
                 && !flags.bools[key]
