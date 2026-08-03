@@ -61,6 +61,10 @@ _win_name_matches = function(processName, wanted) {
 // Reads a registry value. Throws when the value does not exist, unless a
 // fallback argument is supplied - in which case that is returned instead.
 // Passing an explicit undefined counts as supplying one.
+//
+// A REG_EXPAND_SZ value comes back with its %VARIABLES% still unexpanded -
+// RegRead does not expand them. Pass the result through expand_env() when the
+// expanded form is what you want.
 reg_read = function(key, fallback) {
     try {
         return _win_shell().RegRead(key);
@@ -144,6 +148,15 @@ run_command = function(command, options) {
 // buffer while the script is not draining that exact stream - a real failure
 // mode for anything chatty. Redirection has no such limit.
 //
+// The command is wrapped in ( ) before the redirection is appended. Without
+// that, cmd binds the redirect to the LAST command in the string only, so
+// `echo a & echo b` loses "a", and `for /L ... do @echo x` truncates to a
+// single line because each iteration reopens the file. Parentheses make the
+// redirect apply to the whole compound statement.
+//
+// A literal ) inside the command still has to be escaped as ^) by the caller,
+// as it would in any cmd block.
+//
 // options:
 //   window   0 hidden, 1 normal.               default: 0
 //   merge    fold stderr into stdout (2>&1).   default: false
@@ -162,7 +175,9 @@ exec_command = function(command, options) {
     var redirect = options.merge
         ? ' > "' + outPath + '" 2>&1'
         : ' > "' + outPath + '" 2> "' + errPath + '"';
-    var full = 'cmd.exe /s /c "' + command + redirect + '"';
+    // No spaces inside the parentheses: `( echo hi )` emits a trailing space,
+    // `(echo hi)` does not.
+    var full = 'cmd.exe /s /c "(' + command + ')' + redirect + '"';
 
     var exit_code = _win_shell().Run(full, window_style, true);
 
@@ -218,7 +233,10 @@ process_exists = function(name) {
 // throwing, so one protected process does not abandon the rest of the batch.
 kill_process = function(name_or_pid) {
     var by_pid = (typeof name_or_pid === "number");
-    var items  = _win_wmi().ExecQuery("SELECT ProcessId, Name FROM Win32_Process");
+    // SELECT *, not a column list: a projected WMI instance carries only the
+    // properties asked for and no methods, so Terminate() on one fails with
+    // "Object doesn't support this property or method".
+    var items  = _win_wmi().ExecQuery("SELECT * FROM Win32_Process");
     var killed = 0;
     var e      = new Enumerator(items);
     for (; !e.atEnd(); e.moveNext()) {

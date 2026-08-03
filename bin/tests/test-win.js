@@ -51,10 +51,16 @@ describe("registry - read and write", function() {
         assert.equal(reg_read(REG_BASE + "auto_num"), 7);
     });
 
-    it("writes and reads an expandable string", function() {
+    it("writes and reads an expandable string unexpanded", function() {
+        // RegRead does NOT expand REG_EXPAND_SZ - the value comes back with its
+        // %VARIABLES% intact. expand_env() is how a caller expands it.
         reg_write(REG_BASE + "expand", "%TEMP%\\x", "REG_EXPAND_SZ");
-        // RegRead expands REG_EXPAND_SZ on the way out.
-        assert.ok(String(reg_read(REG_BASE + "expand")).indexOf("%TEMP%") === -1);
+        var raw = String(reg_read(REG_BASE + "expand"));
+        assert.equal(raw, "%TEMP%\\x");
+
+        var expanded = expand_env(raw);
+        assert.equal(expanded.indexOf("%TEMP%"), -1, expanded);
+        assert.ok(expanded.length > "\\x".length);
     });
 
     it("writes and reads the key's default value", function() {
@@ -299,10 +305,10 @@ describe("kill_process", function() {
     });
 
     it("terminates a process this test started", function() {
-        // A long ping keeps a distinctly-named copy of cmd.exe alive; start it
-        // detached, confirm it is there, kill it by pid, confirm it is gone.
+        // A long ping is the process under test. Started directly rather than
+        // through cmd.exe /c, so killing it leaves no orphan shell behind.
         var before = list_processes("ping.exe").length;
-        run_command('cmd.exe /c ping -n 30 127.0.0.1', { wait: false });
+        run_command('ping.exe -n 30 127.0.0.1', { wait: false });
         sleep(700);
 
         var running = list_processes("ping.exe");
