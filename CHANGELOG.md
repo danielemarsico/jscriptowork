@@ -51,6 +51,11 @@ reconstructed from the git history.
   UTF-8/surrogate-pair round-trips.
 - `examples/base64-encode-decode.js` — encode/decode a string and round-trip
   a file's contents through `libs/base64.js`.
+- `examples/qr-code-generator.js` — prompts for a URL, then displays a QR
+  code for it in a native window via `open_hta()`. The image itself is
+  rendered by the HTA's own IE engine fetching an `<img>` from
+  api.qrserver.com (goqr.me's free, no-signup QR code API), so no image
+  bytes are ever handled in JScript.
 
 ### Fixed
 
