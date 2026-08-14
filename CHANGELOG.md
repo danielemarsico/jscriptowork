@@ -2,14 +2,28 @@
 
 All notable changes to this project are documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
-This project does not yet publish versioned releases; dated sections below are
-reconstructed from the git history.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and versions follow [semver](https://semver.org/) as `vMAJOR.MINOR.PATCH` git
+tags. Releasing means promoting `Unreleased` to a `## [X.Y.Z] - YYYY-MM-DD`
+heading and pushing the matching tag; `.github/workflows/release.yml` then
+builds, tests, and publishes `launcher.js`, `launcher.min.js` and
+`launcher.bat` as release assets, using that section as the release notes. The
+undated sections below predate the first tagged release and are reconstructed
+from the git history.
 
 ## [Unreleased]
 
 ### Added
 
+- A release process. Versions are `vMAJOR.MINOR.PATCH` tags;
+  `.github/workflows/release.yml` fires on a `v*` tag push and, on a
+  `windows-latest` runner, runs the full test suite, rebuilds `dist/`, minifies
+  it, smoke-tests both bundles under `cscript.exe`, and publishes a GitHub
+  Release carrying `launcher.js`, `launcher.min.js` and `launcher.bat`.
+  Release notes come from the CHANGELOG section for that version, extracted by
+  `tools/changelog-notes.mjs` — which fails the release if the section is
+  missing or empty, so a tag can't ship without its changelog entry. The
+  release uses the runner's built-in `gh` CLI rather than a third-party action.
 - `tools/minify.mjs` — an **optional, maintainer-only** minifier for the built
   bundle: `node tools/minify.mjs` turns `dist/launcher.js` into
   `dist/launcher.min.js` at roughly half the size. It is the only part of the

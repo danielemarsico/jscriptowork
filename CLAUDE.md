@@ -202,6 +202,23 @@ top-level names must never be mangled (they are the bundle's API, and user
 scripts are `eval`'d against them), output must be ES5, and property rewriting
 must stay off (ES3 rejects reserved words as bare property names).
 
+## Releasing
+
+Versioning convention: **`vMAJOR.MINOR.PATCH`** git tags (semver, `v` prefix).
+
+1. Promote the CHANGELOG's `Unreleased` section to `## [X.Y.Z] - YYYY-MM-DD`
+   and open a fresh empty `Unreleased` above it.
+2. Make sure `dist/` was rebuilt from the current `libs/` and committed.
+3. Tag and push: `git tag vX.Y.Z && git push origin vX.Y.Z`.
+
+The tag push triggers `.github/workflows/release.yml` on a `windows-latest`
+runner: it runs the full suite, rebuilds `dist/`, minifies, smoke-tests both
+bundles under `cscript.exe`, reads the release notes out of the CHANGELOG
+(`node tools/changelog-notes.mjs`, which **fails the release** if the version
+has no section — that is what keeps the CHANGELOG from falling behind), and
+creates the GitHub Release with three assets: `launcher.js`,
+`launcher.min.js`, `launcher.bat`.
+
 ## Conventions for changes
 
 - Keep `README.md`, `CHANGELOG.md`, and `TODO.md` in step with the code:

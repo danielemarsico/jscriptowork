@@ -56,17 +56,19 @@ says so and confines the relaxation to build/maintainer time.
       Obfuscation was deliberately not attempted: whitespace/comment stripping
       plus local mangling only, which is what the eval-scope model can take.
 
-- [ ] **Attach the built artifacts to every GitHub release.** Depends on the
-      minify step.
-      - Establish a versioning convention first: the repo has no releases yet
-        and the CHANGELOG uses `Unreleased` + dated sections. Adopt
-        `vMAJOR.MINOR.PATCH` tags and, on release, promote CHANGELOG
-        `Unreleased` to a version heading.
-      - Add a release workflow (`.github/workflows/release.yml`) triggered on
-        `v*` tag push: build `dist/`, run the minifier, and upload
-        `launcher.js`, `launcher.min.js`, and `launcher.bat` as release assets.
-      - Acceptance: pushing a `vX.Y.Z` tag produces a GitHub Release carrying
-        those three assets.
+- [x] **Attach the built artifacts to every GitHub release.** Done —
+      `.github/workflows/release.yml`, triggered on a `v*` tag push. Convention
+      is `vMAJOR.MINOR.PATCH` (recorded in CLAUDE.md "Releasing" and in the
+      CHANGELOG header): promote `Unreleased` to `## [X.Y.Z] - YYYY-MM-DD`,
+      then tag. The job runs the suite, builds, minifies, smoke-tests both
+      bundles under `cscript.exe`, and uploads `launcher.js`,
+      `launcher.min.js`, `launcher.bat` via the runner's `gh` CLI. Release
+      notes come from `tools/changelog-notes.mjs`, which fails the release when
+      the version has no CHANGELOG section.
+      **Untested end-to-end:** nothing short of pushing a real tag exercises
+      the workflow, and that is the repo owner's call, not a task an agent
+      should take. The notes extractor has its own unit checks and was run
+      against the real CHANGELOG.
 
 - [ ] **`--compile`: bundle libs + a user script into one standalone `.js`.**
       Produce a single file that runs via `cscript.exe myscript.bundled.js`

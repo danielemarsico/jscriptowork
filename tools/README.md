@@ -49,3 +49,19 @@ through the minified bundle on a `windows-latest` runner.
 `dist/launcher.min.js` is deliberately not committed: `build.js` deletes and
 recreates `dist/` on every run, so the file is transient by construction. It is
 generated on demand and attached to GitHub releases.
+
+## changelog-notes.mjs
+
+Extracts one version's section from `CHANGELOG.md`, for use as GitHub release
+notes:
+
+```bash
+node tools/changelog-notes.mjs v1.2.3               # to stdout
+node tools/changelog-notes.mjs 1.2.3 --out notes.md
+```
+
+It exits non-zero when the version has no section, or the section is empty.
+`.github/workflows/release.yml` runs it before creating the release, so a tag
+whose CHANGELOG entry was never written fails the release instead of shipping
+with empty notes.
+
