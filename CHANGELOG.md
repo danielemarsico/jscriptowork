@@ -15,6 +15,21 @@ from the git history.
 
 ### Added
 
+- `libs/qrcode.js` — QR code generation from scratch, with no network and no
+  dependencies. `qr_encode(text, options)` implements ISO/IEC 18004: versions
+  1-40, error correction L/M/Q/H, numeric / alphanumeric / byte (UTF-8) modes,
+  Reed-Solomon over GF(256), all eight mask patterns with the spec's penalty
+  scoring, and BCH-encoded format and version information. Renderers come with
+  it: `qr_to_ascii` for the console, `qr_to_html` (a `<table>` of coloured
+  cells, which the old IE engine behind an HTA draws reliably), `qr_to_svg`,
+  and `qr_to_matrix` if you would rather draw it yourself. Total codeword
+  capacity is derived from each version's function-pattern layout instead of
+  tabulated, so there is one less table to get wrong.
+  `examples/qr-code-generator.js` no longer fetches its image from
+  api.qrserver.com — it encodes locally and works with the network unplugged.
+  `bin/tests/test-qrcode.js` covers the field arithmetic, the published
+  generator polynomials, capacity, mode detection, masking, the renderers, and
+  two golden symbols module-for-module.
 - `build.js --compile <script.js>` — compiles one script into a single
   standalone `.js` that runs as `cscript.exe myscript.bundled.js` with no
   `libs/` folder and no launcher. It scans the script for `load("...")` calls

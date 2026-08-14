@@ -58,7 +58,8 @@
     // Load order matters and is this array's order: core before polyfills,
     // console before log (log.js replaces the launcher's log()), and so on.
     var libNames = ["core", "ext", "polyfills", "console", "log", "system", "csv",
-                    "helpers", "minimist", "ui", "win", "base64", "crypto", "minitest"];
+                    "helpers", "minimist", "ui", "win", "base64", "crypto", "qrcode",
+                    "minitest"];
 
     // ---- libs to embed inside HTAs (what ui.js previously loaded via <script src>) ----
     // Must match the files referenced in ui.js block 2.

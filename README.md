@@ -40,6 +40,7 @@ libs/
   win.js            registry, process listing/killing, command execution with captured output
   crypto.js         sha256, sha256_bytes, hmac_sha256, hmac_sha256_bytes
   base64.js         base64_encode/decode, base64_encode_bytes/decode_bytes (no native btoa/atob)
+  qrcode.js         QR code generation from scratch: qr_encode + ASCII/HTML/SVG renderers
   ui.js             open_hta(): native Windows GUI windows via mshta.exe, with live progress
   minimist.js       command-line argument parser (vendored)
   minitest.js       describe / it / assert / skip test framework
@@ -207,7 +208,7 @@ These require a transpiler (e.g. Babel) and **cannot** be used directly in CScri
 | `system-info.js` | registry, environment, subprocess output, process listing |
 | `json-encode-decode.js` | `JSON.stringify`/`parse` plus a real HTTP GET |
 | `base64-encode-decode.js` | base64 over strings and over file bytes |
-| `qr-code-generator.js` | prompt for a URL, render its QR code in a window |
+| `qr-code-generator.js` | prompt for a URL, encode its QR code offline, render it in a window |
 
 ## Roadmap
 

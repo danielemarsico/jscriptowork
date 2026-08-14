@@ -57,6 +57,11 @@ cscript.exe %launcher% %mypath%test-minimist.js
 if errorlevel 1 set OVERALL_EXIT=1
 
 echo.
+echo --- qrcode ---
+cscript.exe %launcher% %mypath%test-qrcode.js
+if errorlevel 1 set OVERALL_EXIT=1
+
+echo.
 echo ============ disk suites ============
 
 echo.

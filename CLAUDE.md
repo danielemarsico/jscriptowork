@@ -34,6 +34,7 @@ libs/
   helpers.js          interactive prompts + Excel / Access / Word COM automation
   crypto.js           sha256, sha256_bytes, hmac_sha256
   base64.js           base64_encode/decode, base64_encode_bytes/decode_bytes (no native btoa/atob)
+  qrcode.js           QR code encoder (ISO/IEC 18004) + ASCII/HTML/SVG renderers
   ui.js               open_hta(): native Windows GUI windows via mshta.exe
   minimist.js         command-line argument parser (vendored)
   minitest.js         describe / it / assert / skip test framework
@@ -170,6 +171,7 @@ Suites and what they need:
 | `test-minitest.js` | nothing |
 | `test-crypto.js` | nothing |
 | `test-base64.js` | nothing |
+| `test-qrcode.js` | nothing |
 | `test-minimist.js` | nothing |
 | `test-console.js` | nothing |
 | `test-csv.js` | temp folder write access (parsing tests need nothing) |

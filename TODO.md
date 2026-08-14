@@ -106,13 +106,17 @@ says so and confines the relaxation to build/maintainer time.
         zip identical to the source folder. Network + desktop required, so mark
         it `skip()` in any suite and keep it example-only.
 
-- [ ] **Offline QR code generation.** `examples/qr-code-generator.js` (and the
-      share-folder example above) currently render the QR via api.qrserver.com,
-      which needs the network. Implement a real ES3 QR encoder — data-encoding
-      modes, Reed–Solomon error correction, mask selection — or vendor an
-      existing ES3-compatible generator, so the examples work with no network
-      access. This is the largest single item here; a vendored, license-clean
-      encoder is the pragmatic path.
+- [x] **Offline QR code generation.** Done — `libs/qrcode.js`, written from
+      scratch rather than vendored: versions 1-40, L/M/Q/H, numeric /
+      alphanumeric / byte (UTF-8), Reed-Solomon over GF(256), all eight masks
+      with the spec's penalty scoring, BCH format/version information, plus
+      ASCII / HTML / SVG renderers. `examples/qr-code-generator.js` now encodes
+      locally and needs no network.
+      **Known scope limit:** one segment per symbol — the encoder picks a single
+      mode for the whole string rather than splitting mixed text into
+      alphanumeric and numeric runs. Symbols stay valid and scannable; a mixed
+      string just uses a slightly larger version than an optimising encoder
+      would. Worth revisiting only if symbol size becomes a real constraint.
 
 ### Research
 

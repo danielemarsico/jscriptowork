@@ -1,10 +1,14 @@
 // qr-code-generator.js - display a QR code for a URL in a native window
 //
-// Prompts for a URL on the console, then opens an HTA window (via
-// open_hta()) showing a QR code for it. The QR code image itself comes from
-// api.qrserver.com (goqr.me's free, no-signup QR code API) - the <img> tag
-// is fetched directly by the HTA's own IE rendering engine, so no image
-// bytes ever need to be handled in JScript.
+// Prompts for a URL on the console, prints the QR code as ASCII art, then
+// opens an HTA window (via open_hta()) showing it.
+//
+// The QR code is generated locally by libs/qrcode.js - a from-scratch ES3
+// encoder. Nothing is fetched: this example used to point an <img> at
+// api.qrserver.com, which meant no network, no QR code. It now works with the
+// network unplugged. The window renders the symbol as a <table> of coloured
+// cells, which the old IE engine behind an HTA draws reliably (no SVG, no
+// canvas, no image bytes to handle in JScript).
 //
 // Run via:
 //   examples\run.bat qr-code-generator.js
@@ -14,6 +18,7 @@
 load("core");
 load("polyfills");
 load("system");
+load("qrcode");
 load("ui");
 
 var DEFAULT_URL = "https://example.com/";
@@ -29,33 +34,39 @@ write_line("Enter a URL to encode as a QR code (Enter for " + DEFAULT_URL + "): 
 var url = read_line().trim();
 if (url === "") { url = DEFAULT_URL; }
 
-var qrImageUrl = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" +
-    encodeURIComponent(url);
+// Level M corrects roughly 15% damage - the usual choice for a screen.
+var qr = qr_encode(url, { ec_level: "M" });
 
 log("Encoding: " + url);
-log("QR image: " + qrImageUrl);
+log("Symbol:   version " + qr.version + ", " + qr.size + "x" + qr.size +
+    " modules, level " + qr.ec_level + ", mask " + qr.mask + ", " + qr.mode + " mode");
+log("");
+log(qr_to_ascii(qr));
 
 open_hta(
     {
         title:  "QR Code",
         width:  380,
-        height: 460,
+        height: 480,
 
         style:
             "body   { font-family: Segoe UI, Arial, sans-serif;" +
             "         display: flex; flex-direction: column;" +
             "         align-items: center; justify-content: center;" +
             "         background: #f0f4f8; margin: 0; }" +
-            "img    { border: 1px solid #d0d7de; border-radius: 4px; background: #fff; }" +
+            "table  { border: 1px solid #d0d7de; border-radius: 4px; }" +
             "p      { color: #2d3748; font-size: 12px; word-break: break-all;" +
             "         max-width: 320px; text-align: center; margin: 12px 0; }" +
+            "small  { color: #718096; font-size: 11px; }" +
             "button { padding: 8px 28px; font-size: 14px; cursor: pointer;" +
             "         background: #0078d4; color: #fff;" +
             "         border: none; border-radius: 4px; }",
 
         body:
-            "<img src=\"" + qrImageUrl + "\" width=\"300\" height=\"300\" alt=\"QR code\">" +
+            qr_to_html(qr, { scale: 6, quiet_zone: 3 }) +
             "<p>" + html_escape(url) + "</p>" +
+            "<p><small>version " + qr.version + " &middot; level " + qr.ec_level +
+            " &middot; generated offline</small></p>" +
             "<button onclick=\"jsw_return(true)\">Close</button>"
     },
     function(result) {
