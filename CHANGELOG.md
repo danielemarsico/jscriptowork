@@ -15,6 +15,16 @@ from the git history.
 
 ### Added
 
+- `bin/tests/test-office.js` — an **opt-in** suite for the Office COM wrappers
+  (`do_in_excel`, `do_in_word`, `do_in_access`), which until now were only
+  checked for existence. Everything skips unless `JSW_TEST_OFFICE=1` is set,
+  so `run-tests.bat` and CI can run the file unconditionally; with it set,
+  each application is probed independently, so a machine with Excel but no
+  Access still gets coverage. Each wrapper is checked for handing the
+  callback a live COM object, for work inside the callback really reaching
+  disk, for quitting the application afterwards, and for surviving a callback
+  that throws — which pins today's behaviour, where the exception is
+  swallowed and logged rather than propagated.
 - `studies/` — findings notes and runnable spikes that are not shipped
   features. First entry: `base64-payload.md`, on distributing the bundle as a
   base64 payload, with `make-base64-bundle.js` as a working proof of concept

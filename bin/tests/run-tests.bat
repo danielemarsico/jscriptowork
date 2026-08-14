@@ -95,6 +95,18 @@ cscript.exe %launcher% %mypath%test-build.js
 if errorlevel 1 set OVERALL_EXIT=1
 
 echo.
+echo ============ opt-in suite ===========
+
+echo.
+if "%JSW_TEST_OFFICE%"=="1" (
+    echo --- office - JSW_TEST_OFFICE=1: Excel/Word/Access really are launched ---
+) else (
+    echo --- office - skipped, set JSW_TEST_OFFICE=1 to run against real Office ---
+)
+cscript.exe %launcher% %mypath%test-office.js
+if errorlevel 1 set OVERALL_EXIT=1
+
+echo.
 echo ============ network suite ==========
 
 echo.

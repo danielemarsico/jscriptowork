@@ -183,6 +183,7 @@ Suites and what they need:
 | `test-helpers.js` | temp folder write access (Office parts are skipped) |
 | `test-win.js` | writes under `HKCU\Software\jscriptowork_test`, spawns `cmd.exe`; no admin rights needed |
 | `test-build.js` | spawns `cscript.exe build.js` as a subprocess (regenerates `dist/`) |
+| `test-office.js` | **opt-in**: everything skips unless `JSW_TEST_OFFICE=1`. With it set, launches real Excel / Word / Access, probing each independently |
 | `test-http.js` | network access to httpbin.org — or set `JSW_TEST_HTTP_OFFLINE=1` (or `CI=true`) to use a local stub instead. The async/binary tests have no stub and skip themselves offline |
 | `test-ui.js` | interactive desktop for the window tests; they skip themselves when `CI=true` (or `JSW_TEST_NO_DESKTOP` is set), and the progress-parsing tests always run |
 

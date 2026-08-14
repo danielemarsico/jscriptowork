@@ -14,9 +14,21 @@ bug is fixed.
 
 ## Testing and tooling
 
-- [ ] `do_in_excel` / `do_in_access` / `do_in_word` are only smoke-checked for
-      existence; they need an opt-in suite that runs on a machine with Office.
-      → `bin/tests/test-helpers.js`, `describe("Office COM wrappers")`
+- [x] `do_in_excel` / `do_in_access` / `do_in_word` — done:
+      `bin/tests/test-office.js`, opt-in through `JSW_TEST_OFFICE=1`. Everything
+      skips without it, so the runner and CI can include the file
+      unconditionally; with it set, each application is probed separately.
+      **Never executed:** writing this suite needs no Office, running it does.
+      It has been checked only in its skip-everything state.
+
+- [ ] **`do_in_access` cannot open a database outside `CURRENT_FOLDER`.** It
+      builds its path as `CURRENT_FOLDER + "/" + database_filename`, so an
+      absolute path becomes nonsense and a database anywhere else is
+      unreachable. Fix: use the argument as-is when it is already absolute
+      (`^[A-Za-z]:\\`, `^\\\\`), and keep the `CURRENT_FOLDER` prefix only for a
+      bare filename — that keeps every existing caller working.
+      **[test]** → `bin/tests/test-office.js`,
+      `skip("opens a database given as an absolute path")`
 
 ## New feature and improvements
 
