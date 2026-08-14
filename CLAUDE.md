@@ -38,7 +38,9 @@ libs/
   ui.js               open_hta(): native Windows GUI windows via mshta.exe
   minimist.js         command-line argument parser (vendored)
   minitest.js         describe / it / assert / skip test framework
-build.js              bundles libs + launcher into dist/
+build.js              bundles libs + launcher into dist/; --compile makes a standalone script
+tools/                maintainer-only, build-time Node tooling (minifier, changelog notes)
+studies/              findings notes + runnable spikes; nothing here ships
 dist/                 generated: launcher.js (all libs inlined) + launcher.bat
 examples/             runnable examples
 ```

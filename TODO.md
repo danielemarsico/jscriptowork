@@ -110,19 +110,15 @@ says so and confines the relaxation to build/maintainer time.
 
 ### Research
 
-- [ ] **Study: distribute the bundle as a base64 payload run through cscript.**
-      A spike, not a committed feature. Goal: ship libs + script as one base64
-      blob and execute it.
-      - Reality check up front: `cscript.exe` cannot run a raw base64/text file
-        — it needs a JScript (`.js`/`.wsf`) entry point. The feasible shape is a
-        small JScript bootstrap that embeds the base64 string, decodes it with
-        `libs/base64.js` (or an inline decoder), and `eval`s the result. So the
-        outer file is still JScript; only the payload is base64.
-      - Trade-offs to measure: base64 inflates size ~33% (partly offset by
-        minifying first); `eval` of one large string loses line numbers in stack
-        traces; net benefit over a plain minified bundle is unclear.
-      - Deliverable of the *study*: a short findings note (feasible shape, real
-        size numbers vs. the plain and minified bundles, error-handling caveats,
-        recommendation) plus a working proof-of-concept that runs an example
-        from a base64 payload. If it proves worthwhile, productize it later as a
-        `--base64` mode on the compile tool above.
+- [x] **Study: distribute the bundle as a base64 payload run through cscript.**
+      Done — findings in `studies/base64-payload.md`, working proof of concept in
+      `studies/make-base64-bundle.js` (it runs `test-core.js` and the examples
+      from a base64 payload).
+      **Recommendation: do not productise.** The outer file has to stay JScript,
+      as predicted; base64 is a flat ~41% size tax (236 KB bundle → 333 KB
+      payload, 117 KB minified → 166 KB); `eval` of one giant string collapses
+      every error in the bundle onto one line of the wrapper; and it hides
+      nothing. `--compile` already ships one file, smaller and debuggable, and
+      the minifier already halves it. No `--base64` mode.
+      Worth keeping in mind for a different problem: embedding *binary* assets
+      in a distributable `.js`, where encoding bytes as text has no alternative.

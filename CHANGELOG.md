@@ -15,6 +15,14 @@ from the git history.
 
 ### Added
 
+- `studies/` — findings notes and runnable spikes that are not shipped
+  features. First entry: `base64-payload.md`, on distributing the bundle as a
+  base64 payload, with `make-base64-bundle.js` as a working proof of concept
+  (it runs the test suite and the examples from a base64 payload). The
+  conclusion is not to productise it: base64 is a flat ~41% size tax, `eval`
+  of one giant string collapses every error onto one line, and it hides
+  nothing — while `--compile` already ships one file and the minifier already
+  halves it.
 - `examples/share-folder.js` — zip a folder, upload it to an anonymous host,
   and show the resulting link as a QR code. Zipping uses `tar.exe` (built into
   Windows 10 1803+) through `exec_command()`; the upload is a real
