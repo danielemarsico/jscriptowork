@@ -190,7 +190,17 @@ build.bat            :: or: cscript.exe build.js
 
 Regenerates `dist/launcher.js` (every lib inlined, `load()` becomes a no-op, HTA
 libs embedded as an escaped string) and `dist/launcher.bat`. `dist/` is
-committed, so regenerate and commit it whenever `libs/` changes.
+committed, so regenerate and commit it whenever `libs/` changes. `build.js`
+deletes and recreates `dist/` wholesale, so nothing else may live in there.
+
+`tools/` is the one exception to "no npm": maintainer-only, build-time-only
+tooling. `node tools/minify.mjs` minifies `dist/launcher.js` into
+`dist/launcher.min.js` (gitignored — `build.js` would wipe it anyway). It is
+opt-in, `build.bat` never calls it, and the artifact stays plain JScript. If you
+touch its terser settings, read the comment block at the top of the file first:
+top-level names must never be mangled (they are the bundle's API, and user
+scripts are `eval`'d against them), output must be ES5, and property rewriting
+must stay off (ES3 rejects reserved words as bare property names).
 
 ## Conventions for changes
 

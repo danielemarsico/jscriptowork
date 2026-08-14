@@ -10,6 +10,21 @@ reconstructed from the git history.
 
 ### Added
 
+- `tools/minify.mjs` — an **optional, maintainer-only** minifier for the built
+  bundle: `node tools/minify.mjs` turns `dist/launcher.js` into
+  `dist/launcher.min.js` at roughly half the size. It is the only part of the
+  project that touches Node.js/npm, it runs at build time only, and its output
+  is still plain JScript — running jscriptowork continues to need nothing but
+  Windows. `build.js` under `cscript.exe` remains the canonical bundler and
+  `build.bat` never calls the minifier. Terser is pinned to ES5 output with
+  top-level mangling off (the bundle's globals *are* its API, and user scripts
+  are `eval`'d against them) and property rewriting off (ES5 allows reserved
+  words as property names; ES3 does not). The tool refuses to write a bundle
+  that lost a public top-level name or that no longer parses as ES5, and a new
+  `minified` CI job runs a suite and an example through the minified bundle on
+  `windows-latest`, since only `cscript.exe` can prove JScript accepts it.
+  `dist/launcher.min.js` is gitignored — `build.js` recreates `dist/` from
+  scratch on every run.
 - `docs/index.html` — a hand-written landing page for GitHub Pages. One file:
   every rule of CSS is inline, there are no fonts, CDNs or scripts, and the
   favicon is a `data:` URI, so the page renders with the network blocked and

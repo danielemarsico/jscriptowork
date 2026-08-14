@@ -53,6 +53,12 @@ self-contained two-file distributable (`launcher.js` + `launcher.bat`) that
 needs no separate `libs/` folder — every lib is inlined and `load()` becomes a
 no-op.
 
+`tools/` holds optional, maintainer-only build tooling — `node tools/minify.mjs`
+minifies `dist/launcher.js` to `dist/launcher.min.js` (about half the size).
+It is the only part of the project that uses Node.js and npm, it is never
+required by `build.bat`, and what it emits is still plain JScript: running
+jscriptowork needs nothing but Windows. See [tools/README.md](tools/README.md).
+
 ## How `load()` works
 
 `bin/launcher.js` reads a lib's source and `eval()`s it **inside `load()`'s own

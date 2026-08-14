@@ -44,28 +44,17 @@ says so and confines the relaxation to build/maintainer time.
 
 ### Distribution
 
-- [ ] **Minify the bundle at build time (external tool permitted here).**
-      Decision: a Node/npm minifier (e.g. terser) is allowed at **build time
-      only** — the shipped artifact stays pure JScript, so end users still need
-      nothing but Windows. `build.js` (run under cscript) remains the canonical
-      bundler; minification is a **separate, opt-in** maintainer step, never
-      required by `build.bat`.
-      - Add a `tools/minify.mjs` (or an npm script) that reads
-        `dist/launcher.js` and writes `dist/launcher.min.js`.
-      - Terser config MUST target ES5/ES3 output (no ES6 emitted) and MUST NOT
-        break JScript's eval-scoping model: the top-level bare-assignment
-        globals (`foo = function(){}`) that survive `load()`'s eval scope must
-        keep their exact names — do **not** mangle or scope top-level names.
-        Keep `'use strict'` handling in mind (JScript parses but doesn't
-        enforce it).
-      - Obfuscation is a secondary, optional goal. Given the eval-scope quirks,
-        aggressive global name-mangling is risky; if attempted, it must preserve
-        every public global the launcher and user scripts reference. Recommend
-        whitespace/comment stripping + local mangling only.
-      - Acceptance: `dist/launcher.min.js` runs an example (e.g.
-        `examples/hello-world.js` or a headless one) with identical output to
-        `dist/launcher.js`; CI runs at least one suite through the minified
-        bundle on the `windows-latest` runner to prove JScript still accepts it.
+- [x] **Minify the bundle at build time (external tool permitted here).**
+      Done — `tools/minify.mjs` (terser), opt-in, never called by `build.bat`.
+      Top-level names are never mangled, output is ES5-only, property access and
+      quoted keys are left alone (ES3 rejects reserved words as bare property
+      names). Before writing, it verifies every public top-level name survived
+      and that the output parses as ES5. `dist/launcher.min.js` is gitignored —
+      `build.js` wipes `dist/` on every run, so it is transient by construction.
+      CI (`minified` job) runs `test-core.js` through the minified bundle on
+      `windows-latest` and diffs an example's output against the plain bundle.
+      Obfuscation was deliberately not attempted: whitespace/comment stripping
+      plus local mangling only, which is what the eval-scope model can take.
 
 - [ ] **Attach the built artifacts to every GitHub release.** Depends on the
       minify step.

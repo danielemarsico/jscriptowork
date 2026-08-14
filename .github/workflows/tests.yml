@@ -20,3 +20,39 @@ jobs:
         run: |
           cscript.exe //nologo //B build.js
           git diff --exit-code -- dist/
+
+  # The minifier is a maintainer-only, opt-in step (tools/minify.mjs, Node at
+  # build time only). It gets its own job because the only thing that can prove
+  # JScript still accepts terser's output is cscript.exe actually running it.
+  minified:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: tools/package-lock.json
+
+      - name: Install build tooling
+        working-directory: tools
+        run: npm ci
+
+      - name: Build dist/
+        shell: cmd
+        run: cscript.exe //nologo //B build.js
+
+      - name: Minify the bundle
+        run: node tools/minify.mjs
+
+      - name: Run a suite through the minified bundle
+        shell: cmd
+        run: cscript.exe //nologo dist\launcher.min.js bin\tests\test-core.js
+
+      - name: Minified bundle produces identical output to the plain one
+        shell: cmd
+        run: |
+          cscript.exe //nologo dist\launcher.js examples\base64-encode-decode.js > out-plain.txt
+          cscript.exe //nologo dist\launcher.min.js examples\base64-encode-decode.js > out-min.txt
+          fc out-plain.txt out-min.txt

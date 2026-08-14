@@ -1,0 +1,15 @@
+{
+  "name": "jscriptowork-tools",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Maintainer-only build tooling for jscriptowork. Nothing here is needed to RUN jscriptowork - a target machine still needs nothing but Windows.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "minify": "node minify.mjs"
+  },
+  "devDependencies": {
+    "acorn": "^8.15.0",
+    "terser": "^5.44.0"
+  }
+}
