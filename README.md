@@ -209,6 +209,7 @@ These require a transpiler (e.g. Babel) and **cannot** be used directly in CScri
 | `json-encode-decode.js` | `JSON.stringify`/`parse` plus a real HTTP GET |
 | `base64-encode-decode.js` | base64 over strings and over file bytes |
 | `qr-code-generator.js` | prompt for a URL, encode its QR code offline, render it in a window |
+| `share-folder.js` | zip a folder, upload it anonymously, show the link as a QR code |
 
 ## Roadmap
 

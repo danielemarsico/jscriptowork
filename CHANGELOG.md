@@ -15,6 +15,15 @@ from the git history.
 
 ### Added
 
+- `examples/share-folder.js` — zip a folder, upload it to an anonymous host,
+  and show the resulting link as a QR code. Zipping uses `tar.exe` (built into
+  Windows 10 1803+) through `exec_command()`; the upload is a real
+  `multipart/form-data` POST whose body is assembled in `ADODB.Stream`,
+  because raw file bytes cannot survive a JScript string; the QR code is
+  generated locally. The example is loud about what the upload means — the
+  file becomes public, has no password, and expires on its own — and asks for
+  an explicit `yes` before sending anything. Needs Windows 10+, the network
+  and a desktop, so it stays example-only with no test suite.
 - `libs/qrcode.js` — QR code generation from scratch, with no network and no
   dependencies. `qr_encode(text, options)` implements ISO/IEC 18004: versions
   1-40, error correction L/M/Q/H, numeric / alphanumeric / byte (UTF-8) modes,

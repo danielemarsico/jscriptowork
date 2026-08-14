@@ -83,28 +83,18 @@ says so and confines the relaxation to build/maintainer time.
 
 ### Examples
 
-- [ ] **`examples/share-folder.js`: folder → zip → anonymous upload → QR.**
-      Decision: upload to an **anonymous, no-signup file host** (0x0.st or
-      file.io) — no API key, simplest to demo. Files are **public and expire**;
-      state this plainly in the script header and in a prompt before uploading.
-      - Select a folder (reuse the prompt helpers in `libs/helpers.js`, or a
-        simple `read_line`).
-      - Zip it with **no external download**: prefer `tar.exe` (built into
-        Windows 10 1803+) via `exec_command` from `libs/win.js`
-        (`tar -a -c -f out.zip -C parent folder`) — reliable and synchronous.
-        Note the Win10+ requirement. The older `Shell.Application` "compressed
-        folder" `CopyHere` trick is the fallback but needs an empty-zip header
-        stub and a poll for its async copy; document that if used.
-      - Upload the zip bytes as `multipart/form-data` via
-        `MSXML2.ServerXMLHTTP`, assembling the body with `ADODB.Stream`
-        (raw bytes can't live in a JScript string safely). Read the returned
-        URL from the response.
-      - QR the URL by reusing `examples/qr-code-generator.js`'s `open_hta`
-        approach (api.qrserver.com today; switch to the offline generator below
-        once it exists).
-      - Acceptance: run it, pick a folder, scan the QR, and the URL downloads a
-        zip identical to the source folder. Network + desktop required, so mark
-        it `skip()` in any suite and keep it example-only.
+- [x] **`examples/share-folder.js`: folder → zip → anonymous upload → QR.**
+      Done. Zips with `tar.exe` through `exec_command()` (and stops with a clear
+      message on a pre-1803 machine rather than guessing — the
+      `Shell.Application` `CopyHere` fallback is documented in a comment, not
+      implemented). Uploads to 0x0.st as `multipart/form-data`, with the body
+      assembled in `ADODB.Stream` and sent through `MSXML2.ServerXMLHTTP`. The
+      returned URL is drawn as a QR code by `libs/qrcode.js` — offline, no image
+      fetched — on the console and in a window. The header and a pre-upload
+      prompt both spell out that the file becomes public and expires; nothing is
+      sent without an explicit `yes`.
+      **Not executed:** it needs Windows, the network and a desktop, and its
+      acceptance test is a human scanning the code. Example-only, no suite.
 
 - [x] **Offline QR code generation.** Done — `libs/qrcode.js`, written from
       scratch rather than vendored: versions 1-40, L/M/Q/H, numeric /
