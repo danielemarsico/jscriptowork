@@ -67,10 +67,11 @@ bite every time:
    function my_helper(a, b) { ... }      // BAD  — dies with load()'s scope
    ```
 
-   `libs/system.js` still has `function randomString(...)`, which is why that
-   helper is unreachable from scripts loaded through `bin/launcher.js` (it *is*
-   reachable from `dist/launcher.js`, where libs are inlined at top level). Do
-   not copy that pattern.
+   A declaration is not merely bad style here: it is reachable from
+   `dist/launcher.js`, where libs are inlined at top level, and invisible
+   through `bin/launcher.js`, where they are not — so the same script works
+   against one launcher and not the other. Anything a caller is meant to use,
+   including a lib's own tables and constants, must be a bare assignment.
 
 2. **Private helpers must be prefix-namespaced, not IIFE-wrapped.** JScript's
    `eval` does not reliably preserve closure scope for function declarations
@@ -97,11 +98,12 @@ literals · reserved words as bare property names (use `obj['default']`).
 
 Additional runtime traps:
 
-- **`str[i]` does not work.** Use `str.charAt(i)`. This is a real bug source —
-  `libs/minimist.js` uses `arg.slice(-1)[0]` and short-flag parsing throws
-  because of it (tracked in `TODO.md`).
-- `typeof someDate` is `"object"`, never `"date"` (another live bug in
-  `read_sheet_data`, tracked in `TODO.md`).
+- **`str[i]` does not work.** Use `str.charAt(i)`. This has bitten
+  `libs/minimist.js` before (`arg.slice(-1)[0]` in short-flag parsing, since
+  fixed) and it fails silently, as `undefined`, rather than throwing where the
+  mistake is.
+- `typeof someDate` is `"object"`, never `"date"`. Test dates with
+  `instanceof Date` or `Object.prototype.toString.call(d)`.
 - No `setTimeout`/`setInterval` — everything is synchronous.
 - `'use strict'` parses but is not enforced.
 - Bit operations are 32-bit signed; `crypto.js` relies on `| 0` and `>>> 0`.
