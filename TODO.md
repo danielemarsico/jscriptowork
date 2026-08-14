@@ -70,24 +70,16 @@ says so and confines the relaxation to build/maintainer time.
       should take. The notes extractor has its own unit checks and was run
       against the real CHANGELOG.
 
-- [ ] **`--compile`: bundle libs + a user script into one standalone `.js`.**
-      Produce a single file that runs via `cscript.exe myscript.bundled.js`
-      with no `libs/` folder and no launcher — the natural extension of what
-      `build.js` already does for the generic launcher.
-      - Reuse `build.js`'s inlining machinery. Prepend the launcher bootstrap
-        (`log`, `CURRENT_FOLDER`/`ROOT_FOLDER`, `read_all_text_file`, and
-        `load()` as a no-op), inline the needed libs, then append the user
-        script body in place of the argument-driven executor.
-      - Which libs to inline: scan the user script for `load("x")` calls and
-        include those (in `libNames` order, so `core` precedes `polyfills`,
-        etc.); fall back to "all libs" if scanning is ambiguous. Preserve load
-        order — it matters (e.g. `log.js` must come after `console.js`).
-      - CLI shape: `cscript.exe build.js --compile myscript.js [--out path]`,
-        or a dedicated `tools/compile.js`. Reuse `libs/minimist.js` for args.
-      - Acceptance: the compiled file runs standalone and produces the same
-        output as running the source through `bin/launcher.js`; extend
-        `bin/tests/test-build.js` to compile a fixture script and assert the
-        expected libs are inlined and `load()` is a no-op.
+- [x] **`--compile`: bundle libs + a user script into one standalone `.js`.**
+      Done — `cscript.exe build.js --compile myscript.js [--out path] [--all-libs]`.
+      Shares `dist/`'s emitters, scans `load("...")` calls and inlines those libs
+      in `libNames` order, falls back to every lib when a `load()` argument is
+      not a literal, errors on a lib that does not exist, and emits
+      `_jsw_hta_inline_libs` only when `ui` is included. Arguments go through
+      `libs/minimist.js`, loaded with `new Function` (build.js has no `load()`),
+      with a long-flags-only fallback parser if that fails.
+      `bin/tests/test-build.js` gained 16 tests: a compiled fixture is inspected
+      *and executed* as a subprocess.
 
 ### Examples
 

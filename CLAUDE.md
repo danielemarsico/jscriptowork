@@ -188,6 +188,30 @@ Suites and what they need:
 build.bat            :: or: cscript.exe build.js
 ```
 
+`build.js` also compiles a single script into a standalone bundle:
+
+```bat
+cscript.exe build.js --compile myscript.js [--out path.js] [--all-libs]
+```
+
+It scans for `load("name")` calls, inlines those libs **in `libNames` order**
+(load order matters: `core` before `polyfills`, `console` before `log`),
+prepends the same bootstrap `dist/launcher.js` uses, and appends the script
+body at top level. A `load()` with a non-literal argument, or `--all-libs`,
+inlines everything; a `load()` naming a lib that does not exist is a hard
+error. `_jsw_hta_inline_libs` is emitted only when `ui` is among the inlined
+libs. Both output paths (`dist/` and `--compile`) share the same emitters —
+`bootstrapLines`, `htaInlineLibsLines`, `inlinedLibLines` — so they cannot
+drift apart.
+
+`build.js` parses its own arguments with `libs/minimist.js`, loaded through
+`new Function(src)()` rather than `eval` — build.js runs directly under
+`cscript.exe`, with no launcher and therefore no `load()`, and `eval` inside its
+IIFE is exactly the shape that loses a lib's inner function declarations (see
+the note at the top of `libs/crypto.js`). If minimist can't be loaded, a
+long-flags-only fallback parser takes over, so a broken lib can never take the
+build with it.
+
 Regenerates `dist/launcher.js` (every lib inlined, `load()` becomes a no-op, HTA
 libs embedded as an escaped string) and `dist/launcher.bat`. `dist/` is
 committed, so regenerate and commit it whenever `libs/` changes. `build.js`

@@ -53,6 +53,23 @@ self-contained two-file distributable (`launcher.js` + `launcher.bat`) that
 needs no separate `libs/` folder — every lib is inlined and `load()` becomes a
 no-op.
 
+To ship a *single script* rather than the generic launcher, compile it:
+
+```bat
+cscript.exe build.js --compile myscript.js
+cscript.exe myscript.bundled.js
+```
+
+`--compile` scans the script for `load("...")` calls, inlines those libs (in
+dependency order, whatever order the script asked in), prepends the bootstrap
+the launcher would normally supply, and appends the script itself. The result
+runs on its own — no `libs/` folder, no launcher. `--out <path>` picks the
+output file; `--all-libs` inlines everything instead of only what is loaded
+(which is also what happens automatically if the script calls `load()` with a
+computed name, since scanning can't resolve that). One difference from running
+through `bin\launcher.js`: there the launcher owns `WScript.Arguments(0)`, so a
+script's own arguments start at 1 — in a compiled bundle they start at 0.
+
 `tools/` holds optional, maintainer-only build tooling — `node tools/minify.mjs`
 minifies `dist/launcher.js` to `dist/launcher.min.js` (about half the size).
 It is the only part of the project that uses Node.js and npm, it is never

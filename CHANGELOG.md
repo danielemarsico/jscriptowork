@@ -15,6 +15,23 @@ from the git history.
 
 ### Added
 
+- `build.js --compile <script.js>` — compiles one script into a single
+  standalone `.js` that runs as `cscript.exe myscript.bundled.js` with no
+  `libs/` folder and no launcher. It scans the script for `load("...")` calls
+  and inlines exactly those libs, in `libNames` order rather than the order the
+  script asked (`core` has to precede `polyfills`, `console` has to precede
+  `log`); a `load()` with a computed argument, or `--all-libs`, inlines
+  everything, and a `load()` naming a lib that does not exist fails the compile
+  instead of producing a bundle with a hole in it. `--out <path>` chooses the
+  output, which defaults to `<script>.bundled.js`. The HTA lib payload is
+  emitted only when `ui` is inlined. `dist/` and `--compile` now share the same
+  emitters, so the two outputs cannot drift apart — the `dist/launcher.js` this
+  produces is byte-identical to the previous build. One behavioural difference
+  worth knowing: running through `bin\launcher.js`, the launcher owns
+  `WScript.Arguments(0)` and a script's own arguments start at 1; in a compiled
+  bundle they start at 0. The compiled file's header says so.
+  `bin/tests/test-build.js` compiles a fixture, inspects what got inlined, and
+  runs the result as a subprocess.
 - A release process. Versions are `vMAJOR.MINOR.PATCH` tags;
   `.github/workflows/release.yml` fires on a `v*` tag push and, on a
   `windows-latest` runner, runs the full test suite, rebuilds `dist/`, minifies
