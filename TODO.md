@@ -28,26 +28,19 @@ says so and confines the relaxation to build/maintainer time.
 
 ### Website
 
-- [ ] **GitHub Pages: a hand-written landing page.**
-      One self-contained `docs/index.html`, served via Settings → Pages →
-      "Deploy from a branch", `main` / `/docs`. No static-site generator, no
-      Jekyll — a single page, in keeping with the zero-dependency ethos.
-      - Content: hero (name + the tagline "Bring the power of modern JavaScript
-        to Windows CScript"), a short "what it is", the lib/feature table from
-        the README, a quick-start (`cscript.exe bin\launcher.js yourscript.js`),
-        and links to the README, CHANGELOG, latest release, and the repo.
-      - Self-contained: inline all CSS, no external fonts/CDN/scripts, so the
-        page renders offline and can't be broken by a third-party outage.
-      - Responsive; light/dark via `prefers-color-scheme`.
-      - Acceptance: enabling Pages serves the page; it renders with the network
-        blocked (no external requests in the page source).
+- [x] **GitHub Pages: a hand-written landing page.** Done — `docs/index.html`.
+      Single file, all CSS inline, no fonts/CDN/scripts, favicon as a `data:`
+      URI; the only external URLs are anchor `href`s. Responsive, light/dark via
+      `prefers-color-scheme`.
+      **Remaining manual step (repo owner):** Settings → Pages → "Deploy from a
+      branch" → `main` / `/docs`. Nothing in the repo can enable that.
 
-- [ ] **Ko-fi donate button on the landing page.** Depends on the page above.
-      **Blocked: needs the Ko-fi handle from the repo owner** — wire it as a
-      plain styled link to `https://ko-fi.com/<HANDLE>` (no external widget
-      script, to keep the page self-contained), placed in the header or footer.
-      Until the handle is supplied, leave a clearly-marked `<!-- TODO: ko-fi
-      handle -->` placeholder rather than a guessed URL.
+- [ ] **Ko-fi donate button on the landing page.**
+      **Blocked: needs the Ko-fi handle from the repo owner.** The markup is
+      already in `docs/index.html` — a plain styled `.kofi` link in the header
+      (no widget script, so the page stays self-contained), carrying `hidden`
+      and a `<!-- TODO: ko-fi handle -->` comment. To finish: set the `href` to
+      `https://ko-fi.com/<HANDLE>` and remove the `hidden` attribute.
 
 ### Distribution
 

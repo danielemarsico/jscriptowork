@@ -10,6 +10,15 @@ reconstructed from the git history.
 
 ### Added
 
+- `docs/index.html` — a hand-written landing page for GitHub Pages. One file:
+  every rule of CSS is inline, there are no fonts, CDNs or scripts, and the
+  favicon is a `data:` URI, so the page renders with the network blocked and
+  can't be broken by a third-party outage. Hero, "what it is", quick start, the
+  library table, the can't-be-polyfilled table, and links to the README,
+  CHANGELOG, latest release and repo. Responsive, and light/dark through
+  `prefers-color-scheme`. Serving it needs one manual step nothing in the repo
+  can do: Settings → Pages → "Deploy from a branch" → `main` / `/docs`. The
+  Ko-fi link is present but `hidden` until the repo owner supplies a handle.
 - `libs/console.js` — the `console` shim, split out of `polyfills.js` so it can
   be loaded on its own (`load("console")`). It now writes through `log()` when
   one exists, falling back to `WScript.Echo`, which makes it work inside an HTA
