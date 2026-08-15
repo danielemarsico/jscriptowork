@@ -1,0 +1,68 @@
+name: Release
+
+# Fires on a version tag push. Versioning convention: vMAJOR.MINOR.PATCH
+# (semver, `v` prefix). Before tagging, promote the CHANGELOG's `Unreleased`
+# section to a `## [X.Y.Z] - YYYY-MM-DD` heading - this workflow reads the
+# release notes straight out of it and fails if the section is missing, so the
+# CHANGELOG cannot silently fall behind the releases.
+#
+# Assets attached to every release:
+#   launcher.js      the bundle, every lib inlined (built by build.js)
+#   launcher.min.js  the same bundle through tools/minify.mjs
+#   launcher.bat     the cscript.exe wrapper
+#
+# Runs on windows-latest because building and testing both need cscript.exe.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: tools/package-lock.json
+
+      - name: Install build tooling
+        working-directory: tools
+        run: npm ci
+
+      - name: Run the test suite
+        shell: cmd
+        run: bin\tests\run-tests.bat
+
+      - name: Build dist/
+        shell: cmd
+        run: cscript.exe //nologo //B build.js
+
+      - name: Minify the bundle
+        run: node tools/minify.mjs
+
+      - name: Smoke-test both bundles
+        shell: cmd
+        run: |
+          cscript.exe //nologo dist\launcher.js bin\tests\test-core.js
+          cscript.exe //nologo dist\launcher.min.js bin\tests\test-core.js
+
+      # Node, not PowerShell: the extractor is a plain script that can be run
+      # and tested off Windows (bin/tests has no reach here - there is no
+      # cscript.exe involved), and the release job already has Node for the
+      # minifier. Fails when the tag has no CHANGELOG section.
+      - name: Extract release notes from CHANGELOG.md
+        run: node tools/changelog-notes.mjs "${{ github.ref_name }}" --out release-notes.md
+
+      - name: Create the release and upload the assets
+        shell: cmd
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "%GITHUB_REF_NAME%" dist\launcher.js dist\launcher.min.js dist\launcher.bat --title "jscriptowork %GITHUB_REF_NAME%" --notes-file release-notes.md

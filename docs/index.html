@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>jscriptowork — Bring the power of modern JavaScript to Windows CScript</title>
+<meta name="description" content="jscriptowork is a zero-dependency framework that makes Windows Script Host (cscript.exe) usable for real automation: polyfills, file/HTTP/CSV/crypto helpers, Office COM automation, native GUI windows and a test framework.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230078d4'/%3E%3Ctext x='32' y='45' font-family='Consolas,monospace' font-size='34' font-weight='bold' fill='%23fff' text-anchor='middle'%3EJs%3C/text%3E%3C/svg%3E">
+<style>
+/* Everything is inline on purpose: no CDN, no web fonts, no scripts.
+   The page must render correctly with the network blocked. */
+
+:root {
+    --bg:        #f6f8fa;
+    --bg-panel:  #ffffff;
+    --bg-code:   #f0f3f6;
+    --fg:        #1f2328;
+    --fg-muted:  #57606a;
+    --accent:    #0a5ca8;
+    --accent-fg: #ffffff;
+    --border:    #d8dee4;
+    --shadow:    0 1px 2px rgba(31, 35, 40, .08), 0 8px 24px rgba(31, 35, 40, .06);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg:        #0d1117;
+        --bg-panel:  #161b22;
+        --bg-code:   #11161d;
+        --fg:        #e6edf3;
+        --fg-muted:  #9aa7b2;
+        --accent:    #58a6ff;
+        --accent-fg: #06131f;
+        --border:    #2a323c;
+        --shadow:    0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .3);
+    }
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+a { color: var(--accent); }
+
+code, pre, .mono {
+    font-family: Consolas, "SFMono-Regular", "Liberation Mono", Menlo, monospace;
+    font-size: .92em;
+}
+
+.wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* ---------- header ---------- */
+
+header.site {
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-panel);
+}
+
+header.site .wrap {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 18px;
+    padding-top: 14px;
+    padding-bottom: 14px;
+}
+
+.brand {
+    font-weight: 700;
+    letter-spacing: -.02em;
+    margin-right: auto;
+    text-decoration: none;
+    color: var(--fg);
+}
+
+.brand span { color: var(--accent); }
+
+header.site nav a {
+    text-decoration: none;
+    color: var(--fg-muted);
+    font-size: .93rem;
+}
+
+header.site nav a:hover { color: var(--accent); text-decoration: underline; }
+
+header.site nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+}
+
+/* Ko-fi: a plain styled link, deliberately not the Ko-fi widget script,
+   so the page stays self-contained and works offline.
+   TODO: ko-fi handle — replace HANDLE below and remove the hidden attribute. */
+.kofi {
+    display: inline-block;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 3px 12px;
+    font-size: .88rem;
+    text-decoration: none;
+    color: var(--fg);
+    background: var(--bg);
+}
+
+.kofi:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---------- hero ---------- */
+
+.hero {
+    padding: 64px 0 48px;
+    text-align: center;
+}
+
+.hero h1 {
+    margin: 0;
+    font-size: clamp(2.2rem, 7vw, 3.4rem);
+    letter-spacing: -.03em;
+}
+
+.hero .tagline {
+    margin: 14px auto 0;
+    max-width: 34ch;
+    font-size: clamp(1.05rem, 3.2vw, 1.35rem);
+    color: var(--fg-muted);
+}
+
+.hero .cmd {
+    display: inline-block;
+    margin-top: 28px;
+    padding: 12px 18px;
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    text-align: left;
+    max-width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+.badges {
+    margin-top: 26px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+.badge {
+    border: 1px solid var(--border);
+    background: var(--bg-panel);
+    border-radius: 999px;
+    padding: 4px 14px;
+    font-size: .85rem;
+    color: var(--fg-muted);
+}
+
+.cta {
+    margin-top: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+}
+
+.btn {
+    display: inline-block;
+    padding: 10px 22px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+}
+
+.btn.primary {
+    background: var(--accent);
+    color: var(--accent-fg);
+}
+
+.btn:hover { filter: brightness(1.08); }
+
+/* ---------- sections ---------- */
+
+section { padding: 34px 0; }
+
+h2 {
+    font-size: 1.45rem;
+    letter-spacing: -.02em;
+    margin: 0 0 14px;
+}
+
+h3 {
+    font-size: 1.05rem;
+    margin: 26px 0 8px;
+}
+
+p { margin: 0 0 14px; }
+
+.lead { color: var(--fg-muted); }
+
+pre {
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    margin: 0 0 16px;
+}
+
+pre code { background: none; padding: 0; }
+
+p code, li code, td code {
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+}
+
+ul { margin: 0 0 16px; padding-left: 22px; }
+
+li { margin-bottom: 6px; }
+
+.panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 22px 24px;
+}
+
+/* ---------- table ---------- */
+
+.table-scroll { overflow-x: auto; }
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: .95rem;
+}
+
+th, td {
+    text-align: left;
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+}
+
+th {
+    font-size: .8rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--fg-muted);
+}
+
+tbody tr:last-child td { border-bottom: none; }
+
+td:first-child { white-space: nowrap; }
+
+/* ---------- footer ---------- */
+
+footer.site {
+    border-top: 1px solid var(--border);
+    background: var(--bg-panel);
+    margin-top: 30px;
+    padding: 26px 0;
+    color: var(--fg-muted);
+    font-size: .9rem;
+}
+
+footer.site .wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    align-items: center;
+}
+
+footer.site .links { margin-left: auto; display: flex; flex-wrap: wrap; gap: 8px 16px; }
+
+@media (max-width: 560px) {
+    .hero { padding: 44px 0 32px; }
+    .panel { padding: 18px 16px; }
+    footer.site .links { margin-left: 0; }
+}
+</style>
+</head>
+<body>
+
+<header class="site">
+    <div class="wrap">
+        <a class="brand" href="#top">jscript<span>o</span>work</a>
+        <nav>
+            <a href="#what">What it is</a>
+            <a href="#quickstart">Quick start</a>
+            <a href="#libraries">Libraries</a>
+            <a href="#limits">Limits</a>
+            <a href="https://github.com/danielemarsico/jscriptowork">GitHub</a>
+        </nav>
+        <!-- TODO: ko-fi handle — the repo owner has not supplied one yet.
+             When it arrives: set href to https://ko-fi.com/<HANDLE> and drop the
+             hidden attribute. Deliberately a plain link, never the widget script. -->
+        <a class="kofi" href="https://ko-fi.com/" hidden>&#9749; Support on Ko-fi</a>
+    </div>
+</header>
+
+<main id="top">
+
+    <div class="hero wrap">
+        <h1>jscriptowork</h1>
+        <p class="tagline">Bring the power of modern JavaScript to Windows CScript.</p>
+
+        <div class="cmd mono">cscript.exe bin\launcher.js yourscript.js</div>
+
+        <div class="badges">
+            <span class="badge">No Node.js</span>
+            <span class="badge">No npm</span>
+            <span class="badge">No install</span>
+            <span class="badge">MIT licensed</span>
+        </div>
+
+        <div class="cta">
+            <a class="btn primary" href="https://github.com/danielemarsico/jscriptowork">View on GitHub</a>
+            <a class="btn" href="https://github.com/danielemarsico/jscriptowork/releases/latest">Latest release</a>
+        </div>
+    </div>
+
+    <section id="what" class="wrap">
+        <h2>What it is</h2>
+        <div class="panel">
+            <p>
+                Windows Script Host runs <strong>JScript 5.8</strong>, an ES3-era engine that ships
+                with every copy of Windows. It is always there, it needs no installer, and it is
+                missing most of the JavaScript you are used to writing.
+            </p>
+            <p>
+                jscriptowork closes that gap. It is a small framework — a polyfill layer, a set of
+                practical helpers, and a test framework — that makes <code>cscript.exe</code> usable
+                for real automation work: reading files, calling HTTP APIs, driving Excel, hashing
+                data, parsing CSV, and putting a native window on screen.
+            </p>
+            <p style="margin-bottom:0">
+                The whole point is what it <em>doesn't</em> need. There is no npm, no
+                <code>package.json</code>, no <code>node_modules</code>, no transpiler and no runtime
+                to install. A target machine needs nothing but Windows.
+            </p>
+        </div>
+    </section>
+
+    <section id="quickstart" class="wrap">
+        <h2>Quick start</h2>
+
+        <p class="lead">Clone the repo (or download a release) and run a script through the launcher:</p>
+
+<pre><code>cscript.exe bin\launcher.js yourscript.js</code></pre>
+
+        <p>Inside your script, pull in the libraries you need with <code>load()</code>:</p>
+
+<pre><code>load("core");       // Array/String/JSON baseline
+load("polyfills");  // Object, Number, Math, Date, Function
+load("console");    // console.log / warn / error
+load("system");     // files, stdin/stdout, HTTP
+
+var users = JSON.parse(http_get("https://example.com/api/users"));
+
+users
+    .filter(function(u) { return u.active; })
+    .forEach(function(u) { console.log(u.name); });
+
+write_text_to_file("C:\\temp\\report.txt", "done");</code></pre>
+
+        <h3>One file to deploy</h3>
+        <p>
+            <code>build.bat</code> bundles every library and the launcher into
+            <code>dist\launcher.js</code> — a single self-contained file, with
+            <code>dist\launcher.bat</code> as a wrapper. Copy those two files to any Windows
+            machine and they run as-is; no <code>libs\</code> folder needed.
+        </p>
+
+<pre><code>build.bat
+dist\launcher.bat yourscript.js</code></pre>
+    </section>
+
+    <section id="libraries" class="wrap">
+        <h2>Libraries</h2>
+        <p class="lead">Every library is a plain <code>.js</code> file under <code>libs/</code>, loaded on demand.</p>
+
+        <div class="panel table-scroll">
+            <table>
+                <thead>
+                    <tr><th>Library</th><th>What it gives you</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>core.js</code></td><td>ES5 baseline: Array/String basics plus Crockford's json2 (<code>JSON.stringify</code> / <code>JSON.parse</code>)</td></tr>
+                    <tr><td><code>polyfills.js</code></td><td>Extended layer: Array, String, Object, Number, Math, Date, Function</td></tr>
+                    <tr><td><code>console.js</code></td><td><code>console.log</code> / <code>info</code> / <code>warn</code> / <code>error</code> / <code>debug</code></td></tr>
+                    <tr><td><code>log.js</code></td><td><code>log()</code> levels (debug/info/warn/error) and a tee to a log file</td></tr>
+                    <tr><td><code>system.js</code></td><td>stdin/stdout, file system, binary files, HTTP (sync, async and binary), date formatting</td></tr>
+                    <tr><td><code>csv.js</code></td><td><code>csv_parse</code> / <code>csv_format</code>, <code>read_csv_file</code> / <code>write_csv_file</code> — RFC 4180, no Excel required</td></tr>
+                    <tr><td><code>helpers.js</code></td><td>Interactive prompts plus Excel / Access / Word COM automation</td></tr>
+                    <tr><td><code>win.js</code></td><td>Registry read/write, process listing and killing over WMI, command execution with captured output</td></tr>
+                    <tr><td><code>crypto.js</code></td><td><code>sha256</code>, <code>sha256_bytes</code>, <code>hmac_sha256</code></td></tr>
+                    <tr><td><code>base64.js</code></td><td><code>base64_encode</code> / <code>decode</code>, over strings and over raw file bytes</td></tr>
+                    <tr><td><code>ui.js</code></td><td><code>open_hta()</code>: native Windows GUI windows via <code>mshta.exe</code>, with live progress streaming</td></tr>
+                    <tr><td><code>minimist.js</code></td><td>Command-line argument parsing (vendored)</td></tr>
+                    <tr><td><code>minitest.js</code></td><td><code>describe</code> / <code>it</code> / <code>assert</code> / <code>skip</code> — the test framework the project tests itself with</td></tr>
+                    <tr><td><code>ext.js</code></td><td><code>Ext.encode</code> / <code>Ext.decode</code> compatibility shim for older Ext-era code</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section id="limits" class="wrap">
+        <h2>What JScript still can't do</h2>
+        <p class="lead">
+            Missing methods can be polyfilled. Missing <em>syntax</em> cannot — it is a parse error,
+            and it takes the whole file down with it. Write ES3 and reach for these workarounds:
+        </p>
+
+        <div class="panel table-scroll">
+            <table>
+                <thead>
+                    <tr><th>Not available</th><th>Instead</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>let</code> / <code>const</code></td><td><code>var</code></td></tr>
+                    <tr><td>Arrow functions</td><td><code>function () {}</code></td></tr>
+                    <tr><td>Template literals</td><td>String concatenation</td></tr>
+                    <tr><td>Destructuring, spread / rest</td><td>Assign properties manually; <code>arguments</code></td></tr>
+                    <tr><td><code>class</code></td><td>Prototype-based patterns</td></tr>
+                    <tr><td><code>for...of</code></td><td><code>for</code> or <code>forEach</code></td></tr>
+                    <tr><td>Default parameters</td><td>Check <code>arguments</code> inside the function</td></tr>
+                    <tr><td><code>Promise</code> / <code>async</code> / <code>await</code></td><td>Callbacks — see <code>http_request_async()</code></td></tr>
+                    <tr><td><code>?.</code> and <code>??</code></td><td>Explicit null checks</td></tr>
+                    <tr><td><code>str[i]</code></td><td><code>str.charAt(i)</code></td></tr>
+                    <tr><td><code>setTimeout</code> / <code>setInterval</code></td><td>Everything is synchronous; <code>sleep(ms)</code></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <p style="margin-top:16px">
+            The full list, with the runtime traps that go with it, is in the
+            <a href="https://github.com/danielemarsico/jscriptowork#cscript--jscript-limitations">README</a>.
+        </p>
+    </section>
+
+</main>
+
+<footer class="site">
+    <div class="wrap">
+        <span>jscriptowork — MIT licensed. Built for Windows, needs nothing else.</span>
+        <span class="links">
+            <a href="https://github.com/danielemarsico/jscriptowork#readme">README</a>
+            <a href="https://github.com/danielemarsico/jscriptowork/blob/main/CHANGELOG.md">Changelog</a>
+            <a href="https://github.com/danielemarsico/jscriptowork/releases/latest">Releases</a>
+            <a href="https://github.com/danielemarsico/jscriptowork">Repository</a>
+        </span>
+    </div>
+</footer>
+
+</body>
+</html>

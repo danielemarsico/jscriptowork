@@ -40,10 +40,13 @@ libs/
   win.js            registry, process listing/killing, command execution with captured output
   crypto.js         sha256, sha256_bytes, hmac_sha256, hmac_sha256_bytes
   base64.js         base64_encode/decode, base64_encode_bytes/decode_bytes (no native btoa/atob)
+  qrcode.js         QR code generation from scratch: qr_encode + ASCII/HTML/SVG renderers
   ui.js             open_hta(): native Windows GUI windows via mshta.exe, with live progress
   minimist.js       command-line argument parser (vendored)
   minitest.js       describe / it / assert / skip test framework
-build.js            bundles libs + launcher into dist/
+build.js            bundles libs + launcher into dist/ (and --compile for standalone scripts)
+tools/              maintainer-only build tooling (minifier) - needs Node, never at run time
+studies/            findings notes and spikes that are not shipped features
 dist/               generated: launcher.js (all libs inlined) + launcher.bat
 examples/           runnable examples
 ```
@@ -52,6 +55,29 @@ Run `build.bat` (or `cscript.exe build.js`) to regenerate `dist/`, a
 self-contained two-file distributable (`launcher.js` + `launcher.bat`) that
 needs no separate `libs/` folder — every lib is inlined and `load()` becomes a
 no-op.
+
+To ship a *single script* rather than the generic launcher, compile it:
+
+```bat
+cscript.exe build.js --compile myscript.js
+cscript.exe myscript.bundled.js
+```
+
+`--compile` scans the script for `load("...")` calls, inlines those libs (in
+dependency order, whatever order the script asked in), prepends the bootstrap
+the launcher would normally supply, and appends the script itself. The result
+runs on its own — no `libs/` folder, no launcher. `--out <path>` picks the
+output file; `--all-libs` inlines everything instead of only what is loaded
+(which is also what happens automatically if the script calls `load()` with a
+computed name, since scanning can't resolve that). One difference from running
+through `bin\launcher.js`: there the launcher owns `WScript.Arguments(0)`, so a
+script's own arguments start at 1 — in a compiled bundle they start at 0.
+
+`tools/` holds optional, maintainer-only build tooling — `node tools/minify.mjs`
+minifies `dist/launcher.js` to `dist/launcher.min.js` (about half the size).
+It is the only part of the project that uses Node.js and npm, it is never
+required by `build.bat`, and what it emits is still plain JScript: running
+jscriptowork needs nothing but Windows. See [tools/README.md](tools/README.md).
 
 ## How `load()` works
 
@@ -184,7 +210,8 @@ These require a transpiler (e.g. Babel) and **cannot** be used directly in CScri
 | `system-info.js` | registry, environment, subprocess output, process listing |
 | `json-encode-decode.js` | `JSON.stringify`/`parse` plus a real HTTP GET |
 | `base64-encode-decode.js` | base64 over strings and over file bytes |
-| `qr-code-generator.js` | prompt for a URL, render its QR code in a window |
+| `qr-code-generator.js` | prompt for a URL, encode its QR code offline, render it in a window |
+| `share-folder.js` | zip a folder, upload it anonymously, show the link as a QR code |
 
 ## Roadmap
 

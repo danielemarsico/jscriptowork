@@ -14,9 +14,21 @@ bug is fixed.
 
 ## Testing and tooling
 
-- [ ] `do_in_excel` / `do_in_access` / `do_in_word` are only smoke-checked for
-      existence; they need an opt-in suite that runs on a machine with Office.
-      → `bin/tests/test-helpers.js`, `describe("Office COM wrappers")`
+- [x] `do_in_excel` / `do_in_access` / `do_in_word` — done:
+      `bin/tests/test-office.js`, opt-in through `JSW_TEST_OFFICE=1`. Everything
+      skips without it, so the runner and CI can include the file
+      unconditionally; with it set, each application is probed separately.
+      **Never executed:** writing this suite needs no Office, running it does.
+      It has been checked only in its skip-everything state.
+
+- [ ] **`do_in_access` cannot open a database outside `CURRENT_FOLDER`.** It
+      builds its path as `CURRENT_FOLDER + "/" + database_filename`, so an
+      absolute path becomes nonsense and a database anywhere else is
+      unreachable. Fix: use the argument as-is when it is already absolute
+      (`^[A-Za-z]:\\`, `^\\\\`), and keep the `CURRENT_FOLDER` prefix only for a
+      bare filename — that keeps every existing caller working.
+      **[test]** → `bin/tests/test-office.js`,
+      `skip("opens a database given as an absolute path")`
 
 ## New feature and improvements
 
@@ -28,131 +40,97 @@ says so and confines the relaxation to build/maintainer time.
 
 ### Website
 
-- [ ] **GitHub Pages: a hand-written landing page.**
-      One self-contained `docs/index.html`, served via Settings → Pages →
-      "Deploy from a branch", `main` / `/docs`. No static-site generator, no
-      Jekyll — a single page, in keeping with the zero-dependency ethos.
-      - Content: hero (name + the tagline "Bring the power of modern JavaScript
-        to Windows CScript"), a short "what it is", the lib/feature table from
-        the README, a quick-start (`cscript.exe bin\launcher.js yourscript.js`),
-        and links to the README, CHANGELOG, latest release, and the repo.
-      - Self-contained: inline all CSS, no external fonts/CDN/scripts, so the
-        page renders offline and can't be broken by a third-party outage.
-      - Responsive; light/dark via `prefers-color-scheme`.
-      - Acceptance: enabling Pages serves the page; it renders with the network
-        blocked (no external requests in the page source).
+- [x] **GitHub Pages: a hand-written landing page.** Done — `docs/index.html`.
+      Single file, all CSS inline, no fonts/CDN/scripts, favicon as a `data:`
+      URI; the only external URLs are anchor `href`s. Responsive, light/dark via
+      `prefers-color-scheme`.
+      **Remaining manual step (repo owner):** Settings → Pages → "Deploy from a
+      branch" → `main` / `/docs`. Nothing in the repo can enable that.
 
-- [ ] **Ko-fi donate button on the landing page.** Depends on the page above.
-      **Blocked: needs the Ko-fi handle from the repo owner** — wire it as a
-      plain styled link to `https://ko-fi.com/<HANDLE>` (no external widget
-      script, to keep the page self-contained), placed in the header or footer.
-      Until the handle is supplied, leave a clearly-marked `<!-- TODO: ko-fi
-      handle -->` placeholder rather than a guessed URL.
+- [ ] **Ko-fi donate button on the landing page.**
+      **Blocked: needs the Ko-fi handle from the repo owner.** The markup is
+      already in `docs/index.html` — a plain styled `.kofi` link in the header
+      (no widget script, so the page stays self-contained), carrying `hidden`
+      and a `<!-- TODO: ko-fi handle -->` comment. To finish: set the `href` to
+      `https://ko-fi.com/<HANDLE>` and remove the `hidden` attribute.
 
 ### Distribution
 
-- [ ] **Minify the bundle at build time (external tool permitted here).**
-      Decision: a Node/npm minifier (e.g. terser) is allowed at **build time
-      only** — the shipped artifact stays pure JScript, so end users still need
-      nothing but Windows. `build.js` (run under cscript) remains the canonical
-      bundler; minification is a **separate, opt-in** maintainer step, never
-      required by `build.bat`.
-      - Add a `tools/minify.mjs` (or an npm script) that reads
-        `dist/launcher.js` and writes `dist/launcher.min.js`.
-      - Terser config MUST target ES5/ES3 output (no ES6 emitted) and MUST NOT
-        break JScript's eval-scoping model: the top-level bare-assignment
-        globals (`foo = function(){}`) that survive `load()`'s eval scope must
-        keep their exact names — do **not** mangle or scope top-level names.
-        Keep `'use strict'` handling in mind (JScript parses but doesn't
-        enforce it).
-      - Obfuscation is a secondary, optional goal. Given the eval-scope quirks,
-        aggressive global name-mangling is risky; if attempted, it must preserve
-        every public global the launcher and user scripts reference. Recommend
-        whitespace/comment stripping + local mangling only.
-      - Acceptance: `dist/launcher.min.js` runs an example (e.g.
-        `examples/hello-world.js` or a headless one) with identical output to
-        `dist/launcher.js`; CI runs at least one suite through the minified
-        bundle on the `windows-latest` runner to prove JScript still accepts it.
+- [x] **Minify the bundle at build time (external tool permitted here).**
+      Done — `tools/minify.mjs` (terser), opt-in, never called by `build.bat`.
+      Top-level names are never mangled, output is ES5-only, property access and
+      quoted keys are left alone (ES3 rejects reserved words as bare property
+      names). Before writing, it verifies every public top-level name survived
+      and that the output parses as ES5. `dist/launcher.min.js` is gitignored —
+      `build.js` wipes `dist/` on every run, so it is transient by construction.
+      CI (`minified` job) runs `test-core.js` through the minified bundle on
+      `windows-latest` and diffs an example's output against the plain bundle.
+      Obfuscation was deliberately not attempted: whitespace/comment stripping
+      plus local mangling only, which is what the eval-scope model can take.
 
-- [ ] **Attach the built artifacts to every GitHub release.** Depends on the
-      minify step.
-      - Establish a versioning convention first: the repo has no releases yet
-        and the CHANGELOG uses `Unreleased` + dated sections. Adopt
-        `vMAJOR.MINOR.PATCH` tags and, on release, promote CHANGELOG
-        `Unreleased` to a version heading.
-      - Add a release workflow (`.github/workflows/release.yml`) triggered on
-        `v*` tag push: build `dist/`, run the minifier, and upload
-        `launcher.js`, `launcher.min.js`, and `launcher.bat` as release assets.
-      - Acceptance: pushing a `vX.Y.Z` tag produces a GitHub Release carrying
-        those three assets.
+- [x] **Attach the built artifacts to every GitHub release.** Done —
+      `.github/workflows/release.yml`, triggered on a `v*` tag push. Convention
+      is `vMAJOR.MINOR.PATCH` (recorded in CLAUDE.md "Releasing" and in the
+      CHANGELOG header): promote `Unreleased` to `## [X.Y.Z] - YYYY-MM-DD`,
+      then tag. The job runs the suite, builds, minifies, smoke-tests both
+      bundles under `cscript.exe`, and uploads `launcher.js`,
+      `launcher.min.js`, `launcher.bat` via the runner's `gh` CLI. Release
+      notes come from `tools/changelog-notes.mjs`, which fails the release when
+      the version has no CHANGELOG section.
+      **Untested end-to-end:** nothing short of pushing a real tag exercises
+      the workflow, and that is the repo owner's call, not a task an agent
+      should take. The notes extractor has its own unit checks and was run
+      against the real CHANGELOG.
 
-- [ ] **`--compile`: bundle libs + a user script into one standalone `.js`.**
-      Produce a single file that runs via `cscript.exe myscript.bundled.js`
-      with no `libs/` folder and no launcher — the natural extension of what
-      `build.js` already does for the generic launcher.
-      - Reuse `build.js`'s inlining machinery. Prepend the launcher bootstrap
-        (`log`, `CURRENT_FOLDER`/`ROOT_FOLDER`, `read_all_text_file`, and
-        `load()` as a no-op), inline the needed libs, then append the user
-        script body in place of the argument-driven executor.
-      - Which libs to inline: scan the user script for `load("x")` calls and
-        include those (in `libNames` order, so `core` precedes `polyfills`,
-        etc.); fall back to "all libs" if scanning is ambiguous. Preserve load
-        order — it matters (e.g. `log.js` must come after `console.js`).
-      - CLI shape: `cscript.exe build.js --compile myscript.js [--out path]`,
-        or a dedicated `tools/compile.js`. Reuse `libs/minimist.js` for args.
-      - Acceptance: the compiled file runs standalone and produces the same
-        output as running the source through `bin/launcher.js`; extend
-        `bin/tests/test-build.js` to compile a fixture script and assert the
-        expected libs are inlined and `load()` is a no-op.
+- [x] **`--compile`: bundle libs + a user script into one standalone `.js`.**
+      Done — `cscript.exe build.js --compile myscript.js [--out path] [--all-libs]`.
+      Shares `dist/`'s emitters, scans `load("...")` calls and inlines those libs
+      in `libNames` order, falls back to every lib when a `load()` argument is
+      not a literal, errors on a lib that does not exist, and emits
+      `_jsw_hta_inline_libs` only when `ui` is included. Arguments go through
+      `libs/minimist.js`, loaded with `new Function` (build.js has no `load()`),
+      with a long-flags-only fallback parser if that fails.
+      `bin/tests/test-build.js` gained 16 tests: a compiled fixture is inspected
+      *and executed* as a subprocess.
 
 ### Examples
 
-- [ ] **`examples/share-folder.js`: folder → zip → anonymous upload → QR.**
-      Decision: upload to an **anonymous, no-signup file host** (0x0.st or
-      file.io) — no API key, simplest to demo. Files are **public and expire**;
-      state this plainly in the script header and in a prompt before uploading.
-      - Select a folder (reuse the prompt helpers in `libs/helpers.js`, or a
-        simple `read_line`).
-      - Zip it with **no external download**: prefer `tar.exe` (built into
-        Windows 10 1803+) via `exec_command` from `libs/win.js`
-        (`tar -a -c -f out.zip -C parent folder`) — reliable and synchronous.
-        Note the Win10+ requirement. The older `Shell.Application` "compressed
-        folder" `CopyHere` trick is the fallback but needs an empty-zip header
-        stub and a poll for its async copy; document that if used.
-      - Upload the zip bytes as `multipart/form-data` via
-        `MSXML2.ServerXMLHTTP`, assembling the body with `ADODB.Stream`
-        (raw bytes can't live in a JScript string safely). Read the returned
-        URL from the response.
-      - QR the URL by reusing `examples/qr-code-generator.js`'s `open_hta`
-        approach (api.qrserver.com today; switch to the offline generator below
-        once it exists).
-      - Acceptance: run it, pick a folder, scan the QR, and the URL downloads a
-        zip identical to the source folder. Network + desktop required, so mark
-        it `skip()` in any suite and keep it example-only.
+- [x] **`examples/share-folder.js`: folder → zip → anonymous upload → QR.**
+      Done. Zips with `tar.exe` through `exec_command()` (and stops with a clear
+      message on a pre-1803 machine rather than guessing — the
+      `Shell.Application` `CopyHere` fallback is documented in a comment, not
+      implemented). Uploads to 0x0.st as `multipart/form-data`, with the body
+      assembled in `ADODB.Stream` and sent through `MSXML2.ServerXMLHTTP`. The
+      returned URL is drawn as a QR code by `libs/qrcode.js` — offline, no image
+      fetched — on the console and in a window. The header and a pre-upload
+      prompt both spell out that the file becomes public and expires; nothing is
+      sent without an explicit `yes`.
+      **Not executed:** it needs Windows, the network and a desktop, and its
+      acceptance test is a human scanning the code. Example-only, no suite.
 
-- [ ] **Offline QR code generation.** `examples/qr-code-generator.js` (and the
-      share-folder example above) currently render the QR via api.qrserver.com,
-      which needs the network. Implement a real ES3 QR encoder — data-encoding
-      modes, Reed–Solomon error correction, mask selection — or vendor an
-      existing ES3-compatible generator, so the examples work with no network
-      access. This is the largest single item here; a vendored, license-clean
-      encoder is the pragmatic path.
+- [x] **Offline QR code generation.** Done — `libs/qrcode.js`, written from
+      scratch rather than vendored: versions 1-40, L/M/Q/H, numeric /
+      alphanumeric / byte (UTF-8), Reed-Solomon over GF(256), all eight masks
+      with the spec's penalty scoring, BCH format/version information, plus
+      ASCII / HTML / SVG renderers. `examples/qr-code-generator.js` now encodes
+      locally and needs no network.
+      **Known scope limit:** one segment per symbol — the encoder picks a single
+      mode for the whole string rather than splitting mixed text into
+      alphanumeric and numeric runs. Symbols stay valid and scannable; a mixed
+      string just uses a slightly larger version than an optimising encoder
+      would. Worth revisiting only if symbol size becomes a real constraint.
 
 ### Research
 
-- [ ] **Study: distribute the bundle as a base64 payload run through cscript.**
-      A spike, not a committed feature. Goal: ship libs + script as one base64
-      blob and execute it.
-      - Reality check up front: `cscript.exe` cannot run a raw base64/text file
-        — it needs a JScript (`.js`/`.wsf`) entry point. The feasible shape is a
-        small JScript bootstrap that embeds the base64 string, decodes it with
-        `libs/base64.js` (or an inline decoder), and `eval`s the result. So the
-        outer file is still JScript; only the payload is base64.
-      - Trade-offs to measure: base64 inflates size ~33% (partly offset by
-        minifying first); `eval` of one large string loses line numbers in stack
-        traces; net benefit over a plain minified bundle is unclear.
-      - Deliverable of the *study*: a short findings note (feasible shape, real
-        size numbers vs. the plain and minified bundles, error-handling caveats,
-        recommendation) plus a working proof-of-concept that runs an example
-        from a base64 payload. If it proves worthwhile, productize it later as a
-        `--base64` mode on the compile tool above.
+- [x] **Study: distribute the bundle as a base64 payload run through cscript.**
+      Done — findings in `studies/base64-payload.md`, working proof of concept in
+      `studies/make-base64-bundle.js` (it runs `test-core.js` and the examples
+      from a base64 payload).
+      **Recommendation: do not productise.** The outer file has to stay JScript,
+      as predicted; base64 is a flat ~41% size tax (236 KB bundle → 333 KB
+      payload, 117 KB minified → 166 KB); `eval` of one giant string collapses
+      every error in the bundle onto one line of the wrapper; and it hides
+      nothing. `--compile` already ships one file, smaller and debuggable, and
+      the minifier already halves it. No `--base64` mode.
+      Worth keeping in mind for a different problem: embedding *binary* assets
+      in a distributable `.js`, where encoding bytes as text has no alternative.

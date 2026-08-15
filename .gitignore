@@ -1,0 +1,8 @@
+# Maintainer-only build tooling (tools/minify.mjs). Nothing here is needed to
+# run jscriptowork - a target machine still needs nothing but Windows.
+tools/node_modules/
+
+# Minifier output. Not committed: build.js deletes and recreates dist/ on every
+# run, so this file is transient by construction. It is produced on demand and
+# uploaded as a release asset.
+dist/launcher.min.js

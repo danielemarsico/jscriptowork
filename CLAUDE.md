@@ -34,10 +34,13 @@ libs/
   helpers.js          interactive prompts + Excel / Access / Word COM automation
   crypto.js           sha256, sha256_bytes, hmac_sha256
   base64.js           base64_encode/decode, base64_encode_bytes/decode_bytes (no native btoa/atob)
+  qrcode.js           QR code encoder (ISO/IEC 18004) + ASCII/HTML/SVG renderers
   ui.js               open_hta(): native Windows GUI windows via mshta.exe
   minimist.js         command-line argument parser (vendored)
   minitest.js         describe / it / assert / skip test framework
-build.js              bundles libs + launcher into dist/
+build.js              bundles libs + launcher into dist/; --compile makes a standalone script
+tools/                maintainer-only, build-time Node tooling (minifier, changelog notes)
+studies/              findings notes + runnable spikes; nothing here ships
 dist/                 generated: launcher.js (all libs inlined) + launcher.bat
 examples/             runnable examples
 ```
@@ -64,10 +67,11 @@ bite every time:
    function my_helper(a, b) { ... }      // BAD  — dies with load()'s scope
    ```
 
-   `libs/system.js` still has `function randomString(...)`, which is why that
-   helper is unreachable from scripts loaded through `bin/launcher.js` (it *is*
-   reachable from `dist/launcher.js`, where libs are inlined at top level). Do
-   not copy that pattern.
+   A declaration is not merely bad style here: it is reachable from
+   `dist/launcher.js`, where libs are inlined at top level, and invisible
+   through `bin/launcher.js`, where they are not — so the same script works
+   against one launcher and not the other. Anything a caller is meant to use,
+   including a lib's own tables and constants, must be a bare assignment.
 
 2. **Private helpers must be prefix-namespaced, not IIFE-wrapped.** JScript's
    `eval` does not reliably preserve closure scope for function declarations
@@ -94,11 +98,12 @@ literals · reserved words as bare property names (use `obj['default']`).
 
 Additional runtime traps:
 
-- **`str[i]` does not work.** Use `str.charAt(i)`. This is a real bug source —
-  `libs/minimist.js` uses `arg.slice(-1)[0]` and short-flag parsing throws
-  because of it (tracked in `TODO.md`).
-- `typeof someDate` is `"object"`, never `"date"` (another live bug in
-  `read_sheet_data`, tracked in `TODO.md`).
+- **`str[i]` does not work.** Use `str.charAt(i)`. This has bitten
+  `libs/minimist.js` before (`arg.slice(-1)[0]` in short-flag parsing, since
+  fixed) and it fails silently, as `undefined`, rather than throwing where the
+  mistake is.
+- `typeof someDate` is `"object"`, never `"date"`. Test dates with
+  `instanceof Date` or `Object.prototype.toString.call(d)`.
 - No `setTimeout`/`setInterval` — everything is synchronous.
 - `'use strict'` parses but is not enforced.
 - Bit operations are 32-bit signed; `crypto.js` relies on `| 0` and `>>> 0`.
@@ -170,6 +175,7 @@ Suites and what they need:
 | `test-minitest.js` | nothing |
 | `test-crypto.js` | nothing |
 | `test-base64.js` | nothing |
+| `test-qrcode.js` | nothing |
 | `test-minimist.js` | nothing |
 | `test-console.js` | nothing |
 | `test-csv.js` | temp folder write access (parsing tests need nothing) |
@@ -179,6 +185,7 @@ Suites and what they need:
 | `test-helpers.js` | temp folder write access (Office parts are skipped) |
 | `test-win.js` | writes under `HKCU\Software\jscriptowork_test`, spawns `cmd.exe`; no admin rights needed |
 | `test-build.js` | spawns `cscript.exe build.js` as a subprocess (regenerates `dist/`) |
+| `test-office.js` | **opt-in**: everything skips unless `JSW_TEST_OFFICE=1`. With it set, launches real Excel / Word / Access, probing each independently |
 | `test-http.js` | network access to httpbin.org — or set `JSW_TEST_HTTP_OFFLINE=1` (or `CI=true`) to use a local stub instead. The async/binary tests have no stub and skip themselves offline |
 | `test-ui.js` | interactive desktop for the window tests; they skip themselves when `CI=true` (or `JSW_TEST_NO_DESKTOP` is set), and the progress-parsing tests always run |
 
@@ -188,9 +195,60 @@ Suites and what they need:
 build.bat            :: or: cscript.exe build.js
 ```
 
+`build.js` also compiles a single script into a standalone bundle:
+
+```bat
+cscript.exe build.js --compile myscript.js [--out path.js] [--all-libs]
+```
+
+It scans for `load("name")` calls, inlines those libs **in `libNames` order**
+(load order matters: `core` before `polyfills`, `console` before `log`),
+prepends the same bootstrap `dist/launcher.js` uses, and appends the script
+body at top level. A `load()` with a non-literal argument, or `--all-libs`,
+inlines everything; a `load()` naming a lib that does not exist is a hard
+error. `_jsw_hta_inline_libs` is emitted only when `ui` is among the inlined
+libs. Both output paths (`dist/` and `--compile`) share the same emitters —
+`bootstrapLines`, `htaInlineLibsLines`, `inlinedLibLines` — so they cannot
+drift apart.
+
+`build.js` parses its own arguments with `libs/minimist.js`, loaded through
+`new Function(src)()` rather than `eval` — build.js runs directly under
+`cscript.exe`, with no launcher and therefore no `load()`, and `eval` inside its
+IIFE is exactly the shape that loses a lib's inner function declarations (see
+the note at the top of `libs/crypto.js`). If minimist can't be loaded, a
+long-flags-only fallback parser takes over, so a broken lib can never take the
+build with it.
+
 Regenerates `dist/launcher.js` (every lib inlined, `load()` becomes a no-op, HTA
 libs embedded as an escaped string) and `dist/launcher.bat`. `dist/` is
-committed, so regenerate and commit it whenever `libs/` changes.
+committed, so regenerate and commit it whenever `libs/` changes. `build.js`
+deletes and recreates `dist/` wholesale, so nothing else may live in there.
+
+`tools/` is the one exception to "no npm": maintainer-only, build-time-only
+tooling. `node tools/minify.mjs` minifies `dist/launcher.js` into
+`dist/launcher.min.js` (gitignored — `build.js` would wipe it anyway). It is
+opt-in, `build.bat` never calls it, and the artifact stays plain JScript. If you
+touch its terser settings, read the comment block at the top of the file first:
+top-level names must never be mangled (they are the bundle's API, and user
+scripts are `eval`'d against them), output must be ES5, and property rewriting
+must stay off (ES3 rejects reserved words as bare property names).
+
+## Releasing
+
+Versioning convention: **`vMAJOR.MINOR.PATCH`** git tags (semver, `v` prefix).
+
+1. Promote the CHANGELOG's `Unreleased` section to `## [X.Y.Z] - YYYY-MM-DD`
+   and open a fresh empty `Unreleased` above it.
+2. Make sure `dist/` was rebuilt from the current `libs/` and committed.
+3. Tag and push: `git tag vX.Y.Z && git push origin vX.Y.Z`.
+
+The tag push triggers `.github/workflows/release.yml` on a `windows-latest`
+runner: it runs the full suite, rebuilds `dist/`, minifies, smoke-tests both
+bundles under `cscript.exe`, reads the release notes out of the CHANGELOG
+(`node tools/changelog-notes.mjs`, which **fails the release** if the version
+has no section — that is what keeps the CHANGELOG from falling behind), and
+creates the GitHub Release with three assets: `launcher.js`,
+`launcher.min.js`, `launcher.bat`.
 
 ## Conventions for changes
 

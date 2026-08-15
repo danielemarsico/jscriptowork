@@ -8,8 +8,9 @@
 // throws when it runs out of scripted input, so a wrong expectation fails the
 // test instead of hanging the run.
 //
-// do_in_excel / do_in_access / do_in_word really do launch Office and are only
-// checked for existence here.
+// do_in_excel / do_in_access / do_in_word really do launch Office, so they are
+// only checked for existence here; bin/tests/test-office.js exercises them for
+// real and is opt-in through JSW_TEST_OFFICE=1.
 //
 // Run via:  cscript.exe launcher.js test-helpers.js
 
@@ -705,14 +706,16 @@ describe("Office COM wrappers", function() {
         assert.equal(typeof write_report_to_file, "function");
     });
 
+    // The real behaviour of all three now has a suite of its own:
+    // bin/tests/test-office.js, opt-in via JSW_TEST_OFFICE=1.
     skip("do_in_excel runs the callback with an Excel.Application",
-         "needs Excel installed; launches a real COM server");
+         "covered by test-office.js (JSW_TEST_OFFICE=1)");
     skip("do_in_excel quits Excel even when the callback throws",
-         "needs Excel installed; launches a real COM server");
+         "covered by test-office.js (JSW_TEST_OFFICE=1)");
     skip("do_in_word runs the callback with a Word.Application",
-         "needs Word installed; launches a real COM server");
+         "covered by test-office.js (JSW_TEST_OFFICE=1)");
     skip("do_in_access opens the database and closes it afterwards",
-         "needs Access installed and a .accdb fixture");
+         "covered by test-office.js (JSW_TEST_OFFICE=1)");
     it("write_report_to_file writes the report next to the source file", function() {
         // assigned without `var` so it becomes a real global, per the
         // load()/eval scoping rule documented in CLAUDE.md.

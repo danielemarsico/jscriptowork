@@ -2,14 +2,111 @@
 
 All notable changes to this project are documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
-This project does not yet publish versioned releases; dated sections below are
-reconstructed from the git history.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and versions follow [semver](https://semver.org/) as `vMAJOR.MINOR.PATCH` git
+tags. Releasing means promoting `Unreleased` to a `## [X.Y.Z] - YYYY-MM-DD`
+heading and pushing the matching tag; `.github/workflows/release.yml` then
+builds, tests, and publishes `launcher.js`, `launcher.min.js` and
+`launcher.bat` as release assets, using that section as the release notes. The
+undated sections below predate the first tagged release and are reconstructed
+from the git history.
 
 ## [Unreleased]
 
 ### Added
 
+- `bin/tests/test-office.js` — an **opt-in** suite for the Office COM wrappers
+  (`do_in_excel`, `do_in_word`, `do_in_access`), which until now were only
+  checked for existence. Everything skips unless `JSW_TEST_OFFICE=1` is set,
+  so `run-tests.bat` and CI can run the file unconditionally; with it set,
+  each application is probed independently, so a machine with Excel but no
+  Access still gets coverage. Each wrapper is checked for handing the
+  callback a live COM object, for work inside the callback really reaching
+  disk, for quitting the application afterwards, and for surviving a callback
+  that throws — which pins today's behaviour, where the exception is
+  swallowed and logged rather than propagated.
+- `studies/` — findings notes and runnable spikes that are not shipped
+  features. First entry: `base64-payload.md`, on distributing the bundle as a
+  base64 payload, with `make-base64-bundle.js` as a working proof of concept
+  (it runs the test suite and the examples from a base64 payload). The
+  conclusion is not to productise it: base64 is a flat ~41% size tax, `eval`
+  of one giant string collapses every error onto one line, and it hides
+  nothing — while `--compile` already ships one file and the minifier already
+  halves it.
+- `examples/share-folder.js` — zip a folder, upload it to an anonymous host,
+  and show the resulting link as a QR code. Zipping uses `tar.exe` (built into
+  Windows 10 1803+) through `exec_command()`; the upload is a real
+  `multipart/form-data` POST whose body is assembled in `ADODB.Stream`,
+  because raw file bytes cannot survive a JScript string; the QR code is
+  generated locally. The example is loud about what the upload means — the
+  file becomes public, has no password, and expires on its own — and asks for
+  an explicit `yes` before sending anything. Needs Windows 10+, the network
+  and a desktop, so it stays example-only with no test suite.
+- `libs/qrcode.js` — QR code generation from scratch, with no network and no
+  dependencies. `qr_encode(text, options)` implements ISO/IEC 18004: versions
+  1-40, error correction L/M/Q/H, numeric / alphanumeric / byte (UTF-8) modes,
+  Reed-Solomon over GF(256), all eight mask patterns with the spec's penalty
+  scoring, and BCH-encoded format and version information. Renderers come with
+  it: `qr_to_ascii` for the console, `qr_to_html` (a `<table>` of coloured
+  cells, which the old IE engine behind an HTA draws reliably), `qr_to_svg`,
+  and `qr_to_matrix` if you would rather draw it yourself. Total codeword
+  capacity is derived from each version's function-pattern layout instead of
+  tabulated, so there is one less table to get wrong.
+  `examples/qr-code-generator.js` no longer fetches its image from
+  api.qrserver.com — it encodes locally and works with the network unplugged.
+  `bin/tests/test-qrcode.js` covers the field arithmetic, the published
+  generator polynomials, capacity, mode detection, masking, the renderers, and
+  two golden symbols module-for-module.
+- `build.js --compile <script.js>` — compiles one script into a single
+  standalone `.js` that runs as `cscript.exe myscript.bundled.js` with no
+  `libs/` folder and no launcher. It scans the script for `load("...")` calls
+  and inlines exactly those libs, in `libNames` order rather than the order the
+  script asked (`core` has to precede `polyfills`, `console` has to precede
+  `log`); a `load()` with a computed argument, or `--all-libs`, inlines
+  everything, and a `load()` naming a lib that does not exist fails the compile
+  instead of producing a bundle with a hole in it. `--out <path>` chooses the
+  output, which defaults to `<script>.bundled.js`. The HTA lib payload is
+  emitted only when `ui` is inlined. `dist/` and `--compile` now share the same
+  emitters, so the two outputs cannot drift apart — the `dist/launcher.js` this
+  produces is byte-identical to the previous build. One behavioural difference
+  worth knowing: running through `bin\launcher.js`, the launcher owns
+  `WScript.Arguments(0)` and a script's own arguments start at 1; in a compiled
+  bundle they start at 0. The compiled file's header says so.
+  `bin/tests/test-build.js` compiles a fixture, inspects what got inlined, and
+  runs the result as a subprocess.
+- A release process. Versions are `vMAJOR.MINOR.PATCH` tags;
+  `.github/workflows/release.yml` fires on a `v*` tag push and, on a
+  `windows-latest` runner, runs the full test suite, rebuilds `dist/`, minifies
+  it, smoke-tests both bundles under `cscript.exe`, and publishes a GitHub
+  Release carrying `launcher.js`, `launcher.min.js` and `launcher.bat`.
+  Release notes come from the CHANGELOG section for that version, extracted by
+  `tools/changelog-notes.mjs` — which fails the release if the section is
+  missing or empty, so a tag can't ship without its changelog entry. The
+  release uses the runner's built-in `gh` CLI rather than a third-party action.
+- `tools/minify.mjs` — an **optional, maintainer-only** minifier for the built
+  bundle: `node tools/minify.mjs` turns `dist/launcher.js` into
+  `dist/launcher.min.js` at roughly half the size. It is the only part of the
+  project that touches Node.js/npm, it runs at build time only, and its output
+  is still plain JScript — running jscriptowork continues to need nothing but
+  Windows. `build.js` under `cscript.exe` remains the canonical bundler and
+  `build.bat` never calls the minifier. Terser is pinned to ES5 output with
+  top-level mangling off (the bundle's globals *are* its API, and user scripts
+  are `eval`'d against them) and property rewriting off (ES5 allows reserved
+  words as property names; ES3 does not). The tool refuses to write a bundle
+  that lost a public top-level name or that no longer parses as ES5, and a new
+  `minified` CI job runs a suite and an example through the minified bundle on
+  `windows-latest`, since only `cscript.exe` can prove JScript accepts it.
+  `dist/launcher.min.js` is gitignored — `build.js` recreates `dist/` from
+  scratch on every run.
+- `docs/index.html` — a hand-written landing page for GitHub Pages. One file:
+  every rule of CSS is inline, there are no fonts, CDNs or scripts, and the
+  favicon is a `data:` URI, so the page renders with the network blocked and
+  can't be broken by a third-party outage. Hero, "what it is", quick start, the
+  library table, the can't-be-polyfilled table, and links to the README,
+  CHANGELOG, latest release and repo. Responsive, and light/dark through
+  `prefers-color-scheme`. Serving it needs one manual step nothing in the repo
+  can do: Settings → Pages → "Deploy from a branch" → `main` / `/docs`. The
+  Ko-fi link is present but `hidden` until the repo owner supplies a handle.
 - `libs/console.js` — the `console` shim, split out of `polyfills.js` so it can
   be loaded on its own (`load("console")`). It now writes through `log()` when
   one exists, falling back to `WScript.Echo`, which makes it work inside an HTA
