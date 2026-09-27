@@ -721,6 +721,14 @@ describe("Office COM wrappers", function() {
         // load()/eval scoping rule documented in CLAUDE.md.
         OUTPUT_FOLDER = "";
 
+        // Clear any stale report left in CURRENT_FOLDER first, so the assertion
+        // below is about the one file THIS test writes and nothing else. Without
+        // this, a report accidentally committed into bin/ (or left by an
+        // interrupted run) makes the glob match more than one file and the test
+        // fails with "Expected 1 but got N".
+        var stale = select_files_from_folder(CURRENT_FOLDER, "", /mydata-\d+\.txt$/);
+        for (var s = 0; s < stale.length; s++) { delete_file(stale[s]); }
+
         var source = tmp("mydata.xlsx");
         write_text_to_file("source", source);
 
@@ -729,7 +737,7 @@ describe("Office COM wrappers", function() {
         var written = select_files_from_folder(CURRENT_FOLDER, "", /mydata-\d+\.txt$/);
         assert.equal(written.length, 1);
         assert.equal(read_text_file(written[0]), "hello report");
-        delete_file(written[0]);
+        for (var w = 0; w < written.length; w++) { delete_file(written[w]); }
     });
 
 });

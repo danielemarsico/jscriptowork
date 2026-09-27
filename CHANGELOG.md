@@ -13,8 +13,37 @@ from the git history.
 
 ## [Unreleased]
 
+### Fixed
+
+- CI was red on `main` from two pre-existing test problems, now fixed:
+  - Three stray `bin/mydata-*.txt` report files had been committed by
+    accident, so `test-helpers.js`'s `write_report_to_file` test found four
+    matching files where it expected the one it just wrote. Removed them,
+    gitignored the pattern, and the test now clears any stale report first so
+    it can't be tripped by leftovers again.
+  - `test-win.js`'s `kill_process` test slept a fixed 700 ms for a spawned
+    `ping.exe` to appear, which was too short on a busy runner - it failed
+    intermittently and left the ping orphaned. It now polls for the process to
+    appear and to disappear instead of sleeping a fixed interval.
+
 ### Added
 
+- `examples/esp32-decimen-loader.js` and `examples/decimen-airgap-runbook.md` -
+  a generator (run on an internet-connected PC) that turns a file into an
+  ESP32-S2/S3 USB-HID sketch which types it onto an **air-gapped** laptop as
+  verified chunks, plus the end-to-end runbook. Built to bootstrap
+  [Decimen](https://github.com/bashalarmistalt/decimen-optical-transfer)'s
+  optical-transfer sender onto a machine that takes no USB and has no network.
+  The file is zipped (`tar.exe`) and base64'd, split into chunks each hashed on
+  the laptop with `certutil`/`findstr` so a mistyped chunk is caught where it
+  happened, then reassembled, decoded, unzipped and SHA-256 checked - using
+  only tools already on Windows. Emitted commands carry no dead-key characters,
+  so they type correctly under US and US-International; a canary line catches a
+  wrong layout before the payload. The generator self-checks that its chunks
+  decode back to the source before writing anything. Alongside the ESP32
+  sketch it emits a hardware-neutral `payload-lines.txt`, so any USB-HID device
+  (RP2040, nRF52840/Raytac dongle, Rubber Ducky) can replay the same lines.
+  Reuses `base64.js`, `crypto.js`, `win.js`.
 - `bin/tests/test-office.js` — an **opt-in** suite for the Office COM wrappers
   (`do_in_excel`, `do_in_word`, `do_in_access`), which until now were only
   checked for existence. Everything skips unless `JSW_TEST_OFFICE=1` is set,
