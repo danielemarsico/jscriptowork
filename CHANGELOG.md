@@ -27,8 +27,10 @@ from the git history.
   only tools already on Windows. Emitted commands carry no dead-key characters,
   so they type correctly under US and US-International; a canary line catches a
   wrong layout before the payload. The generator self-checks that its chunks
-  decode back to the source before writing anything. Reuses `base64.js`,
-  `crypto.js`, `win.js`.
+  decode back to the source before writing anything. Alongside the ESP32
+  sketch it emits a hardware-neutral `payload-lines.txt`, so any USB-HID device
+  (RP2040, nRF52840/Raytac dongle, Rubber Ducky) can replay the same lines.
+  Reuses `base64.js`, `crypto.js`, `win.js`.
 - `bin/tests/test-office.js` — an **opt-in** suite for the Office COM wrappers
   (`do_in_excel`, `do_in_word`, `do_in_access`), which until now were only
   checked for existence. Everything skips unless `JSW_TEST_OFFICE=1` is set,

@@ -274,6 +274,29 @@ ino.push("");
 var inoPath = outDir + "\\esp32-decimen-loader.ino";
 write_text_to_file(ino.join("\r\n"), inoPath);
 
+// --- hardware-neutral line list --------------------------------------------
+//
+// The .ino is one way to replay these lines; any USB-HID device can do it (an
+// RP2040/Pi Pico, an nRF52840/Raytac dongle, a Rubber Ducky, ...). This file is
+// the portable artifact: type each non-blank, non-'#' line and press Enter.
+// STAGE 1 first (stop and confirm CANARY OK), then STAGE 2 (ends in FILE OK).
+
+var lines = [];
+lines.push("# Decimen air-gap loader - lines to type, in order.");
+lines.push("# Any USB-HID device can replay these: type each line below, then Enter.");
+lines.push("# Skip blank lines and lines starting with '#'. No line contains a quote,");
+lines.push("# backtick, caret or tilde, so US and US-International layouts both work.");
+lines.push("#");
+lines.push("# === STAGE 1 (setup + canary) - type these, then confirm CANARY OK ===");
+for (var s1 = 0; s1 < stage1.length; s1++) { lines.push(stage1[s1]); }
+lines.push("");
+lines.push("# === STAGE 2 (payload + assembly) - type these, then confirm FILE OK ===");
+for (var s2 = 0; s2 < stage2.length; s2++) { lines.push(stage2[s2]); }
+lines.push("");
+
+var linesPath = outDir + "\\payload-lines.txt";
+write_text_to_file(lines.join("\r\n"), linesPath);
+
 // --- 6. emit the manifest --------------------------------------------------
 
 var man = [];
@@ -311,6 +334,7 @@ if (fso.FileExists(zipPath)) { fso.DeleteFile(zipPath); }
 log("");
 log("SELF-CHECK OK: chunks decode back to the zip byte-for-byte.");
 log("Wrote " + inoPath);
+log("Wrote " + linesPath + " (hardware-neutral line list)");
 log("Wrote " + outDir + "\\manifest.txt");
 log("");
 log("  source SHA-256 : " + fullHash);
