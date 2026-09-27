@@ -6,3 +6,10 @@ tools/node_modules/
 # run, so this file is transient by construction. It is produced on demand and
 # uploaded as a release asset.
 dist/launcher.min.js
+
+# Test artifacts written into bin/ by test-helpers.js (report output). These are
+# transient and must never be committed - a stray one breaks the
+# write_report_to_file test, whose glob then matches more than the one file it
+# just wrote.
+bin/mydata-*.txt
+bin/consistency_analysis_report-*.txt

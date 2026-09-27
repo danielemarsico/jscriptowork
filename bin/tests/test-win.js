@@ -309,9 +309,16 @@ describe("kill_process", function() {
         // through cmd.exe /c, so killing it leaves no orphan shell behind.
         var before = list_processes("ping.exe").length;
         run_command('ping.exe -n 30 127.0.0.1', { wait: false });
-        sleep(700);
 
+        // Poll for it to appear rather than sleeping a fixed interval: on a busy
+        // CI runner the process start and the WMI Win32_Process enumeration can
+        // both lag, and a single short sleep made this test flaky (it would fail
+        // with "never started" and leave the ping orphaned for 30s).
         var running = list_processes("ping.exe");
+        for (var tries = 0; tries < 40 && running.length <= before; tries++) {
+            sleep(250);
+            running = list_processes("ping.exe");
+        }
         assert.ok(running.length > before,
                   "the ping process under test never started (before=" + before +
                   ", now=" + running.length + ")");
@@ -320,12 +327,17 @@ describe("kill_process", function() {
         assert.equal(kill_process(target), 1,
             "kill_process(" + target + ") terminated nothing - Terminate() was " +
             "refused or is unavailable on the WMI instance");
-        sleep(500);
 
-        var still_there = false;
-        var after = list_processes("ping.exe");
-        for (var i = 0; i < after.length; i++) {
-            if (after[i].pid === target) { still_there = true; }
+        // Poll for it to disappear, same reasoning.
+        function still_running(pid) {
+            var procs = list_processes("ping.exe");
+            for (var i = 0; i < procs.length; i++) { if (procs[i].pid === pid) { return true; } }
+            return false;
+        }
+        var still_there = still_running(target);
+        for (var t2 = 0; t2 < 40 && still_there; t2++) {
+            sleep(250);
+            still_there = still_running(target);
         }
         assert.notOk(still_there, "pid " + target + " survived kill_process");
     });

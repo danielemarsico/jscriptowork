@@ -13,6 +13,19 @@ from the git history.
 
 ## [Unreleased]
 
+### Fixed
+
+- CI was red on `main` from two pre-existing test problems, now fixed:
+  - Three stray `bin/mydata-*.txt` report files had been committed by
+    accident, so `test-helpers.js`'s `write_report_to_file` test found four
+    matching files where it expected the one it just wrote. Removed them,
+    gitignored the pattern, and the test now clears any stale report first so
+    it can't be tripped by leftovers again.
+  - `test-win.js`'s `kill_process` test slept a fixed 700 ms for a spawned
+    `ping.exe` to appear, which was too short on a busy runner - it failed
+    intermittently and left the ping orphaned. It now polls for the process to
+    appear and to disappear instead of sleeping a fixed interval.
+
 ### Added
 
 - `examples/esp32-decimen-loader.js` and `examples/decimen-airgap-runbook.md` -
